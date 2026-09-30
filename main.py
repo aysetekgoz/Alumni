@@ -1,7 +1,12 @@
-from fastapi import FastAPI
-from fastapi.responses import HTMLResponse
+from typing import Optional
+from fastapi import FastAPI, HTTPException, status
+from fastapi.responses import HTMLResponse, RedirectResponse
+from pydantic import BaseModel
 
-app = FastAPI(title="Alumni Tracking System")
+app = FastAPI(
+    title="Alumni Tracking System",
+    docs_url="/api/swagger",
+)
 
 LANDING_PAGE_HTML = """<!DOCTYPE html>
 <html lang="tr">
@@ -363,7 +368,7 @@ LANDING_PAGE_HTML = """<!DOCTYPE html>
             <h1>İstanbul Üniversitesi<br>Mezun Takip Sistemi</h1>
             <p>Web Programlama dersi kapsamında geliştirilen FastAPI tabanlı mezun takip ve yönetim platformu. Backend servislerimiz aktif olarak çalışmaktadır.</p>
             <div class="cta-group">
-                <a href="/docs" target="_blank" class="btn btn-primary">
+                <a href="/api/swagger" target="_blank" class="btn btn-primary">
                     <span>📖 API Dökümantasyonunu Aç</span>
                 </a>
                 <a href="/about" class="btn btn-secondary">
@@ -766,7 +771,7 @@ ABOUT_PAGE_HTML = """<!DOCTYPE html>
                 <a href="/" class="btn btn-primary">
                     <span>← Ana Sayfaya Dön</span>
                 </a>
-                <a href="/docs" target="_blank" class="btn btn-secondary">
+                <a href="/api/swagger" target="_blank" class="btn btn-secondary">
                     <span>📖 API Dökümantasyonu</span>
                 </a>
             </div>
@@ -779,6 +784,11 @@ ABOUT_PAGE_HTML = """<!DOCTYPE html>
 </body>
 </html>
 """
+
+
+@app.get("/docs", include_in_schema=False)
+def docs_redirect():
+    return RedirectResponse(url="/api/swagger")
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -804,6 +814,107 @@ def hello_name(name: str):
 @app.get("/sum/{number1}/{number2}")
 def sum_numbers(number1: int, number2: int):
     return number1 + number2
+
+
+@app.get("/api/health")
+def health_check():
+    return {"status": "ok"}
+
+
+# In-memory veritabanı (henüz gerçek veritabanı bağlanmadı)
+users_db = []
+
+
+class UserCreate(BaseModel):
+    first_name: str
+    last_name: str
+    email: str
+    graduation_year: int
+    department: str
+
+
+class UserUpdate(BaseModel):
+    first_name: str
+    last_name: str
+    email: str
+    graduation_year: int
+    department: str
+
+
+class UserPatch(BaseModel):
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    email: Optional[str] = None
+    graduation_year: Optional[int] = None
+    department: Optional[str] = None
+
+
+@app.post("/api/users", status_code=status.HTTP_201_CREATED)
+def create_user(user: UserCreate):
+    new_user = {
+        "id": len(users_db) + 1,
+        **user.model_dump()
+    }
+    users_db.append(new_user)
+    return {
+        "message": "Kullanıcı başarıyla oluşturuldu",
+        "user": new_user
+    }
+
+
+@app.get("/api/users")
+def get_users():
+    return users_db
+
+
+@app.get("/api/users/{user_id}")
+def get_user_by_id(user_id: int):
+    for user in users_db:
+        if user["id"] == user_id:
+            return user
+    raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
+
+
+@app.put("/api/users/{user_id}")
+def update_user(user_id: int, user_data: UserUpdate):
+    for user in users_db:
+        if user["id"] == user_id:
+            user.update(user_data.model_dump())
+            return {
+                "message": "Kullanıcı bilgileri tamamen güncellendi (PUT)",
+                "user": user
+            }
+    raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
+
+
+@app.patch("/api/users/{user_id}")
+def patch_user(user_id: int, user_data: UserPatch):
+    for user in users_db:
+        if user["id"] == user_id:
+            update_data = user_data.model_dump(exclude_unset=True)
+            if not update_data:
+                return {
+                    "message": "Güncellenecek herhangi bir alan gönderilmedi",
+                    "user": user
+                }
+            user.update(update_data)
+            return {
+                "message": "Kullanıcı bilgileri kısmen güncellendi (PATCH)",
+                "user": user
+            }
+    raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
+
+
+@app.delete("/api/users/{user_id}")
+def delete_user(user_id: int):
+    for index, user in enumerate(users_db):
+        if user["id"] == user_id:
+            deleted_user = users_db.pop(index)
+            return {
+                "message": "Kullanıcı başarıyla silindi",
+                "deleted_user": deleted_user
+            }
+    raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
 
 
 if __name__ == "__main__":
