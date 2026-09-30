@@ -12,5 +12,3 @@ ENV/
 # IDE / Editor
 .vscode/
 .idea/
-.postman/
-postman/
