@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mezun Yönetim Paneli - Alumni Tracking System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --card-border: rgba(255, 255, 255, 0.1);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #38bdf8;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.2rem 2rem;
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--card-border);
+            position: sticky;
+            top: 0;
+            z-index: 20;
+        }
+        .logo { font-size: 1.2rem; font-weight: 700; color: #fff; text-decoration: none; display: flex; align-items: center; gap: 0.5rem; }
+        .nav-links { display: flex; gap: 1rem; align-items: center; }
+        .nav-links a { color: var(--text-muted); text-decoration: none; font-size: 0.9rem; font-weight: 600; transition: color 0.2s; }
+        .nav-links a:hover { color: #fff; }
+        .nav-btn-docs {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff !important;
+            padding: 0.4rem 0.9rem;
+            border-radius: 8px;
+            border: 1px solid var(--card-border);
+        }
+        .container { max-width: 1080px; margin: 2rem auto; padding: 0 1.5rem; width: 100%; flex: 1; }
+        
+        .header-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            backdrop-filter: blur(12px);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .header-card h1 { font-size: 2rem; margin-bottom: 0.35rem; color: #fff; }
+        .header-card p { color: var(--text-muted); font-size: 0.95rem; }
+        .stats-badge {
+            background: rgba(99, 102, 241, 0.2);
+            border: 1px solid rgba(99, 102, 241, 0.4);
+            padding: 0.6rem 1.2rem;
+            border-radius: 12px;
+            color: #a5b4fc;
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+
+        .alert-success {
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.4);
+            color: #6ee7b7;
+            padding: 1rem 1.25rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+
+        .crud-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+
+        .form-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 1.75rem;
+            backdrop-filter: blur(12px);
+        }
+        .form-card h2 { font-size: 1.25rem; margin-bottom: 1.25rem; color: #fff; display: flex; align-items: center; gap: 0.5rem; }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.25rem;
+        }
+        .form-group { display: flex; flex-direction: column; gap: 0.4rem; }
+        .form-group label { font-size: 0.85rem; font-weight: 600; color: var(--text-muted); }
+        .form-group input {
+            padding: 0.75rem 0.9rem;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            color: #fff;
+            font-family: inherit;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .form-group input:focus { border-color: var(--primary); }
+        .btn-submit {
+            padding: 0.8rem 1.6rem;
+            background: linear-gradient(135deg, #4f46e5, #6366f1);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4); }
+
+        .list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .list-header h2 { font-size: 1.25rem; color: #fff; display: flex; align-items: center; gap: 0.5rem; }
+        .search-input {
+            padding: 0.55rem 1rem;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            color: #fff;
+            font-family: inherit;
+            font-size: 0.9rem;
+            min-width: 240px;
+            outline: none;
+        }
+        .search-input:focus { border-color: var(--accent); }
+
+        .users-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 1.25rem; }
+        .user-card {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--card-border);
+            border-radius: 14px;
+            padding: 1.4rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+        .user-card:hover { transform: translateY(-3px); border-color: rgba(99, 102, 241, 0.5); }
+        .user-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem; }
+        .user-name { font-size: 1.15rem; font-weight: 700; color: #fff; }
+        .user-id-badge {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--accent);
+            padding: 0.2rem 0.5rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+        .user-badge {
+            display: inline-block;
+            background: rgba(99, 102, 241, 0.2);
+            color: #a5b4fc;
+            padding: 0.25rem 0.6rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+        }
+        .user-info { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.35rem; }
+        
+        .user-actions {
+            display: flex;
+            gap: 0.6rem;
+            margin-top: 1.25rem;
+            padding-top: 0.9rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .btn-action {
+            flex: 1;
+            padding: 0.55rem 0.75rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.35rem;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .btn-edit {
+            background: rgba(56, 189, 248, 0.15);
+            color: #38bdf8;
+            border: 1px solid rgba(56, 189, 248, 0.3);
+        }
+        .btn-edit:hover { background: rgba(56, 189, 248, 0.25); transform: translateY(-1px); }
+        .btn-delete {
+            background: rgba(239, 68, 68, 0.15);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+        .btn-delete:hover { background: rgba(239, 68, 68, 0.25); transform: translateY(-1px); }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            background: var(--card-bg);
+            border-radius: 12px;
+            color: var(--text-muted);
+            border: 1px dashed var(--card-border);
+        }
+
+        /* Modal Stilleri */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(4px);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal-card {
+            background: #0f172a;
+            border: 1px solid var(--card-border);
+            border-radius: 18px;
+            max-width: 500px;
+            width: 100%;
+            padding: 2rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+            animation: modalIn 0.2s ease;
+        }
+        @keyframes modalIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--card-border);
+        }
+        .modal-header h3 { font-size: 1.25rem; color: #fff; }
+        .btn-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.5rem;
+            cursor: pointer;
+            line-height: 1;
+        }
+        .btn-close:hover { color: #fff; }
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+        }
+        .btn-cancel {
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+            padding: 0.65rem 1.2rem;
+            border-radius: 8px;
+            border: 1px solid var(--card-border);
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .btn-cancel:hover { background: rgba(255, 255, 255, 0.15); }
+
+        footer { text-align: center; padding: 2rem; color: var(--text-muted); font-size: 0.85rem; border-top: 1px solid var(--card-border); }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="/" class="logo">🎓 Alumni Tracking System</a>
+        <div class="nav-links">
+            <a href="/">Ana Sayfa</a>
+            <a href="/about">Hakkında</a>
+            <a href="/users" style="color: #fff; font-weight: 700;">Mezunlar (Web CRUD)</a>
+            <a href="/api/swagger" target="_blank" class="nav-btn-docs">Swagger UI ↗</a>
+        </div>
+    </nav>
+    <div class="container">
+        <div class="header-card">
+            <div>
+                <h1>🎓 Mezun Yönetim Paneli (View Layer)</h1>
+                <p>Web Arayüzü Üzerinden Tam CRUD Yönetimi • Ekle, Listele, Düzenle, Sil</p>
+            </div>
+            <div class="stats-badge">
+                Toplam Mezun: <span id="userCount">{{ users|length if users else 0 }}</span>
+            </div>
+        </div>
+
+        {% if message %}
+        <div class="alert-success">
+            <span>✅</span>
+            <span>{{ message }}</span>
+        </div>
+        {% endif %}
+
+        <div class="crud-grid">
+            <!-- CREATE (C) FORMU -->
+            <div class="form-card">
+                <h2>➕ Yeni Mezun Ekle (POST /users - Create)</h2>
+                <form method="POST" action="/users">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="first_name">Ad</label>
+                            <input type="text" id="first_name" name="first_name" required placeholder="Örn: Ayşe">
+                        </div>
+                        <div class="form-group">
+                            <label for="last_name">Soyad</label>
+                            <input type="text" id="last_name" name="last_name" required placeholder="Örn: Tekgöz">
+                        </div>
+                        <div class="form-group">
+                            <label for="email">E-Posta</label>
+                            <input type="email" id="email" name="email" required placeholder="Örn: ayse@example.com">
+                        </div>
+                        <div class="form-group">
+                            <label for="graduation_year">Mezuniyet Yılı</label>
+                            <input type="number" id="graduation_year" name="graduation_year" required value="2026">
+                        </div>
+                        <div class="form-group">
+                            <label for="department">Bölüm</label>
+                            <input type="text" id="department" name="department" required placeholder="Örn: Bilgisayar Mühendisliği">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-submit">
+                        <span>Kaydet ve Listeye Ekle</span>
+                    </button>
+                </form>
+            </div>
+
+            <!-- READ (R), UPDATE (U), DELETE (D) LİSTESİ -->
+            <div>
+                <div class="list-header">
+                    <h2>📋 Kayıtlı Mezunlar Listesi (GET /users - Read)</h2>
+                    <input type="text" id="searchBox" class="search-input" placeholder="🔍 İsim veya bölüme göre ara..." onkeyup="filterUsers()">
+                </div>
+
+                {% if users and users|length > 0 %}
+                <div class="users-grid" id="usersGrid">
+                    {% for u in users %}
+                    <div class="user-card" id="user-card-{{ u.id }}" data-search="{{ u.first_name|lower }} {{ u.last_name|lower }} {{ u.department|lower }} {{ u.email|lower }}">
+                        <div>
+                            <div class="user-header">
+                                <span class="user-name">{{ u.first_name }} {{ u.last_name }}</span>
+                                <span class="user-id-badge">#{{ u.id }}</span>
+                            </div>
+                            <div class="user-badge">🎓 Mezuniyet: {{ u.graduation_year }}</div>
+                            <div class="user-info"><strong>Bölüm:</strong> {{ u.department }}</div>
+                            <div class="user-info"><strong>E-Posta:</strong> {{ u.email }}</div>
+                        </div>
+
+                        <!-- AKSİYONLAR: DÜZENLE (U) & SİL (D) -->
+                        <div class="user-actions">
+                            <button type="button" class="btn-action btn-edit" onclick="openEditModal({{ u.id }}, '{{ u.first_name }}', '{{ u.last_name }}', '{{ u.email }}', {{ u.graduation_year }}, '{{ u.department }}')">
+                                ✏️ Düzenle
+                            </button>
+
+                            <form method="POST" action="/users/{{ u.id }}/delete" style="flex: 1; display: flex;" onsubmit="return confirm('\'{{ u.first_name }} {{ u.last_name }}\' kaydını silmek istediğinize emin misiniz?');">
+                                <button type="submit" class="btn-action btn-delete" style="width: 100%;">
+                                    🗑️ Sil
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    Henüz kayıtlı mezun bulunmuyor. Yukarıdaki formu kullanarak ilk mezun kaydını ekleyebilirsiniz.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- UPDATE (U) MODAL -->
+    <div class="modal-overlay" id="editModal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>✏️ Mezun Bilgilerini Düzenle (Update)</h3>
+                <button type="button" class="btn-close" onclick="closeEditModal()">&times;</button>
+            </div>
+            <form id="editForm" method="POST" action="">
+                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                    <div class="form-group">
+                        <label for="edit_first_name">Ad</label>
+                        <input type="text" id="edit_first_name" name="first_name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit_last_name">Soyad</label>
+                        <input type="text" id="edit_last_name" name="last_name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit_email">E-Posta</label>
+                        <input type="email" id="edit_email" name="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit_graduation_year">Mezuniyet Yılı</label>
+                        <input type="number" id="edit_graduation_year" name="graduation_year" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit_department">Bölüm</label>
+                        <input type="text" id="edit_department" name="department" required>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-cancel" onclick="closeEditModal()">İptal</button>
+                    <button type="submit" class="btn-submit">Değişiklikleri Kaydet</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <footer>
+        <p>İstanbul Üniversitesi • Web Programlama • Alumni Tracking System (Full MVC CRUD)</p>
+    </footer>
+
+    <script>
+        function openEditModal(id, firstName, lastName, email, year, department) {
+            document.getElementById('editForm').action = '/users/' + id + '/update';
+            document.getElementById('edit_first_name').value = firstName;
+            document.getElementById('edit_last_name').value = lastName;
+            document.getElementById('edit_email').value = email;
+            document.getElementById('edit_graduation_year').value = year;
+            document.getElementById('edit_department').value = department;
+            document.getElementById('editModal').classList.add('active');
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').classList.remove('active');
+        }
+
+        function filterUsers() {
+            const input = document.getElementById('searchBox').value.toLowerCase();
+            const cards = document.querySelectorAll('.user-card');
+            cards.forEach(card => {
+                const search = card.getAttribute('data-search') || '';
+                card.style.display = search.includes(input) ? '' : 'none';
+            });
+        }
+    </script>
+</body>
+</html>

@@ -3,9 +3,30 @@ from fastapi import FastAPI, HTTPException, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from pydantic import BaseModel
 
+from models.user import User, UserCreate, UserUpdate, UserPatch
+from controllers import UserController, ApiUserController, user_router, api_user_router
+
+tags_metadata = [
+    {
+        "name": "User",
+        "description": "UserController tarafından yönetilen /users rotaları.",
+    },
+    {
+        "name": "ApiUser",
+        "description": "ApiUserController tarafından yönetilen /api/users rotaları.",
+    },
+    {
+        "name": "system",
+        "description": "Sistem sağlık kontrolü rotaları.",
+    },
+]
+
 app = FastAPI(
     title="Alumni Tracking System",
+    description="İstanbul Üniversitesi Web Programlama - Mezun Takip Sistemi (UserController & ApiUserController)",
+    version="1.0.0",
     docs_url="/api/swagger",
+    openapi_tags=tags_metadata,
 )
 
 LANDING_PAGE_HTML = """<!DOCTYPE html>
@@ -816,105 +837,25 @@ def sum_numbers(number1: int, number2: int):
     return number1 + number2
 
 
-@app.get("/api/health")
+@app.get("/api/health", tags=["system"], summary="Service Health Check")
 def health_check():
     return {"status": "ok"}
 
 
-# In-memory veritabanı (henüz gerçek veritabanı bağlanmadı)
-users_db = []
+# In-memory veritabanı (User Model veri deposu referansı)
+users_db = User._db
 
+# Her iki controller'ı uygulamaya register et (tanıt)
+app.include_router(user_router)
+app.include_router(api_user_router)
 
-class UserCreate(BaseModel):
-    first_name: str
-    last_name: str
-    email: str
-    graduation_year: int
-    department: str
-
-
-class UserUpdate(BaseModel):
-    first_name: str
-    last_name: str
-    email: str
-    graduation_year: int
-    department: str
-
-
-class UserPatch(BaseModel):
-    first_name: Optional[str] = None
-    last_name: Optional[str] = None
-    email: Optional[str] = None
-    graduation_year: Optional[int] = None
-    department: Optional[str] = None
-
-
-@app.post("/api/users", status_code=status.HTTP_201_CREATED)
-def create_user(user: UserCreate):
-    new_user = {
-        "id": len(users_db) + 1,
-        **user.model_dump()
-    }
-    users_db.append(new_user)
-    return {
-        "message": "Kullanıcı başarıyla oluşturuldu",
-        "user": new_user
-    }
-
-
-@app.get("/api/users")
-def get_users():
-    return users_db
-
-
-@app.get("/api/users/{user_id}")
-def get_user_by_id(user_id: int):
-    for user in users_db:
-        if user["id"] == user_id:
-            return user
-    raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
-
-
-@app.put("/api/users/{user_id}")
-def update_user(user_id: int, user_data: UserUpdate):
-    for user in users_db:
-        if user["id"] == user_id:
-            user.update(user_data.model_dump())
-            return {
-                "message": "Kullanıcı bilgileri tamamen güncellendi (PUT)",
-                "user": user
-            }
-    raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
-
-
-@app.patch("/api/users/{user_id}")
-def patch_user(user_id: int, user_data: UserPatch):
-    for user in users_db:
-        if user["id"] == user_id:
-            update_data = user_data.model_dump(exclude_unset=True)
-            if not update_data:
-                return {
-                    "message": "Güncellenecek herhangi bir alan gönderilmedi",
-                    "user": user
-                }
-            user.update(update_data)
-            return {
-                "message": "Kullanıcı bilgileri kısmen güncellendi (PATCH)",
-                "user": user
-            }
-    raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
-
-
-@app.delete("/api/users/{user_id}")
-def delete_user(user_id: int):
-    for index, user in enumerate(users_db):
-        if user["id"] == user_id:
-            deleted_user = users_db.pop(index)
-            return {
-                "message": "Kullanıcı başarıyla silindi",
-                "deleted_user": deleted_user
-            }
-    raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
+# Geriye dönük uyumluluk ve doğrudan kullanım için Controller fonksiyon referansları
+create_user = ApiUserController.create
+get_users = ApiUserController.get_all
+get_user_by_id = ApiUserController.get_by_id
+update_user = ApiUserController.update
+patch_user = ApiUserController.patch
+delete_user = ApiUserController.delete
 
 
 if __name__ == "__main__":
