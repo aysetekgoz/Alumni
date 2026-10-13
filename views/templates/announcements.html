@@ -1,0 +1,108 @@
+{% extends "announcement_base.html" %}
+{% block title %}Duyuru Yönetim Paneli{% endblock %}
+{% block content %}
+<div class="header-card">
+    <div>
+        <h1>📢 Duyuru Yönetim Paneli</h1>
+        <p>Web Arayüzü Üzerinden Tam CRUD Yönetimi • Ekle, Listele, Görüntüle, Düzenle, Sil</p>
+    </div>
+    <div class="stats-badge">Toplam Duyuru: <span>{{ announcements|length }}</span></div>
+</div>
+
+<div class="crud-grid">
+    <div class="form-card">
+        <h2>➕ Yeni Duyuru Ekle (POST /announcements)</h2>
+        <form method="POST" action="/announcements">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="title">Başlık</label>
+                    <input type="text" id="title" name="title" required placeholder="Örn: Mezunlar Buluşması">
+                </div>
+                <div class="form-group">
+                    <label for="author">Yazar</label>
+                    <input type="text" id="author" name="author" required placeholder="Örn: Ayşe Tekgöz">
+                </div>
+                <div class="form-group full">
+                    <label for="content">İçerik</label>
+                    <textarea id="content" name="content" rows="4" required placeholder="Duyuru metni..."></textarea>
+                </div>
+            </div>
+            <button type="submit" class="btn-submit">Kaydet ve Listeye Ekle</button>
+        </form>
+    </div>
+
+    <div>
+        <div class="list-header">
+            <h2>📋 Kayıtlı Duyurular (GET /announcements)</h2>
+            <input type="text" id="searchBox" class="search-input" placeholder="🔍 Başlık, içerik veya yazara göre ara..." onkeyup="filterItems()">
+        </div>
+
+        {% if announcements %}
+        <div class="items-grid">
+            {% for a in announcements %}
+            <div class="item-card" data-search="{{ (a.title ~ ' ' ~ a.content ~ ' ' ~ a.author)|lower }}">
+                <div>
+                    <div class="item-header">
+                        <a class="item-title" href="/announcements/{{ a.id }}">{{ a.title }}</a>
+                        <span class="id-badge">#{{ a.id }}</span>
+                    </div>
+                    <div class="item-badge">🕒 {{ a.created_at }}</div>
+                    <div class="item-info"><strong>Yazar:</strong> {{ a.author }}</div>
+                    <div class="item-info">{{ a.content[:120] }}{% if a.content|length > 120 %}…{% endif %}</div>
+                </div>
+                <div class="item-actions">
+                    <button type="button" class="btn-action btn-edit"
+                        data-id="{{ a.id }}" data-title="{{ a.title }}" data-content="{{ a.content }}" data-author="{{ a.author }}"
+                        onclick="openEditModal(this)">✏️ Düzenle</button>
+                    <form method="POST" action="/announcements/{{ a.id }}/delete" style="flex:1;display:flex;"
+                          onsubmit="return confirm('Bu duyuruyu silmek istediğinize emin misiniz?');">
+                        <button type="submit" class="btn-action btn-delete" style="width:100%;">🗑️ Sil</button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">Henüz duyuru bulunmuyor. Yukarıdaki formu kullanarak ilk duyuruyu ekleyebilirsiniz.</div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="modal-overlay" id="editModal">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3>✏️ Duyuruyu Düzenle</h3>
+            <button type="button" class="btn-close" onclick="closeEditModal()">&times;</button>
+        </div>
+        <form id="editForm" method="POST" action="">
+            <div style="display:flex;flex-direction:column;gap:1rem;">
+                <div class="form-group"><label for="edit_title">Başlık</label><input type="text" id="edit_title" name="title" required></div>
+                <div class="form-group"><label for="edit_author">Yazar</label><input type="text" id="edit_author" name="author" required></div>
+                <div class="form-group"><label for="edit_content">İçerik</label><textarea id="edit_content" name="content" rows="4" required></textarea></div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-cancel" onclick="closeEditModal()">İptal</button>
+                <button type="submit" class="btn-submit">Değişiklikleri Kaydet</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+    function openEditModal(btn) {
+        document.getElementById('editForm').action = '/announcements/' + btn.dataset.id + '/edit';
+        document.getElementById('edit_title').value = btn.dataset.title;
+        document.getElementById('edit_author').value = btn.dataset.author;
+        document.getElementById('edit_content').value = btn.dataset.content;
+        document.getElementById('editModal').classList.add('active');
+    }
+    function closeEditModal() { document.getElementById('editModal').classList.remove('active'); }
+    function filterItems() {
+        const q = document.getElementById('searchBox').value.toLowerCase();
+        document.querySelectorAll('.item-card').forEach(c => {
+            c.style.display = (c.getAttribute('data-search') || '').includes(q) ? '' : 'none';
+        });
+    }
+</script>
+{% endblock %}

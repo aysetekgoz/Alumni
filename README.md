@@ -173,7 +173,43 @@ Swagger dokümantasyonunda rotalar iki ayrı grup altında gösterilmektedir:
 | `ApiUser` | `PATCH` | `/api/users/{user_id}` | `ApiUserController` | REST API: Kullanıcı bilgilerini kısmen güncelle |
 | `ApiUser` | `DELETE` | `/api/users/{user_id}` | `ApiUserController` | REST API: Kullanıcı kaydını sil |
 
+## Announcement Module (Duyurular — veritabanısız)
+
+### Yeni dosyalar
+
+| Dosya | Açıklama |
+| :--- | :--- |
+| `models/announcement.py` | `Announcement` modeli (bellek içi liste `_db`; `id` ve `created_at` otomatik) + `create/get_all/get_by_id/update/patch/delete` ve Pydantic şemaları |
+| `controllers/announcement_controller.py` | `AnnouncementController` — HTML sayfalar, kendi `/announcements` router'ı (tag: `Announcement`). Tüm kullanıcı metinleri `html.escape` ile basılır (XSS koruması) |
+| `controllers/api_announcement_controller.py` | `ApiAnnouncementController` — JSON, kendi `/api/announcements` router'ı (tag: `ApiAnnouncement`). Miras yoktur |
+| `requirements.txt` | `python-multipart` eklendi (form verisi için) |
+
+Olmayan id için her iki controller da **404** döner. Router'lar `main.py` içinde `include_router` ile bağlanır.
+
+### Web endpoint'leri (`Announcement`)
+
+| Method | Endpoint | Açıklama |
+| :--- | :--- | :--- |
+| `GET` | `/announcements` | Liste + ekleme formu |
+| `POST` | `/announcements` | Oluştur → 303 `/announcements` |
+| `GET` | `/announcements/{id}` | Detay |
+| `GET` | `/announcements/{id}/edit` | Düzenleme formu |
+| `POST` | `/announcements/{id}/edit` | Güncelle → 303 `/announcements/{id}` |
+| `POST` | `/announcements/{id}/delete` | Sil → 303 `/announcements` |
+
+### API endpoint'leri (`ApiAnnouncement`)
+
+| Method | Endpoint | Açıklama |
+| :--- | :--- | :--- |
+| `GET` | `/api/announcements` | Tümünü listele |
+| `POST` | `/api/announcements` | Oluştur (201) |
+| `GET` | `/api/announcements/{id}` | Detay (404) |
+| `PUT` | `/api/announcements/{id}` | Tam güncelle |
+| `PATCH` | `/api/announcements/{id}` | Kısmi güncelle |
+| `DELETE` | `/api/announcements/{id}` | Sil |
+
 ## Running the Project
+
 
 The project is designed to run with Docker Compose:
 

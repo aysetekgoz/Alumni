@@ -1,0 +1,27 @@
+{% extends "announcement_base.html" %}
+{% block title %}Duyuruyu Düzenle{% endblock %}
+{% block content %}
+<div class="form-card">
+    <h2>✏️ Duyuruyu Düzenle (#{{ announcement.id }})</h2>
+    <form method="POST" action="/announcements/{{ announcement.id }}/edit">
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="title">Başlık</label>
+                <input type="text" id="title" name="title" required value="{{ announcement.title }}">
+            </div>
+            <div class="form-group">
+                <label for="author">Yazar</label>
+                <input type="text" id="author" name="author" required value="{{ announcement.author }}">
+            </div>
+            <div class="form-group full">
+                <label for="content">İçerik</label>
+                <textarea id="content" name="content" rows="6" required>{{ announcement.content }}</textarea>
+            </div>
+        </div>
+        <div style="display:flex;gap:.75rem;">
+            <button type="submit" class="btn-submit">Güncelle</button>
+            <a class="btn-cancel" href="/announcements/{{ announcement.id }}">İptal</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

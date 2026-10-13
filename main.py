@@ -4,9 +4,24 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from pydantic import BaseModel
 
 from models.user import User, UserCreate, UserUpdate, UserPatch
-from controllers import UserController, ApiUserController, user_router, api_user_router
+from controllers import (
+    UserController,
+    ApiUserController,
+    user_router,
+    api_user_router,
+    announcement_router,
+    api_announcement_router,
+)
 
 tags_metadata = [
+    {
+        "name": "Announcement",
+        "description": "AnnouncementController tarafından yönetilen /announcements HTML rotaları.",
+    },
+    {
+        "name": "ApiAnnouncement",
+        "description": "ApiAnnouncementController tarafından yönetilen /api/announcements JSON rotaları.",
+    },
     {
         "name": "User",
         "description": "UserController tarafından yönetilen /users rotaları.",
@@ -375,6 +390,8 @@ LANDING_PAGE_HTML = """<!DOCTYPE html>
             <span>Alumni Tracking System</span>
         </a>
         <div class="nav-links">
+            <a href="/users" class="nav-btn nav-btn-link">Mezunlar</a>
+            <a href="/announcements" class="nav-btn nav-btn-link">Duyurular</a>
             <a href="/about" class="nav-btn nav-btn-link">Hakkında</a>
             <a href="/docs" target="_blank" class="nav-btn nav-btn-docs">Swagger UI (/docs)</a>
         </div>
@@ -752,6 +769,8 @@ ABOUT_PAGE_HTML = """<!DOCTYPE html>
         </a>
         <div class="nav-links">
             <a href="/" class="nav-btn nav-btn-link">Ana Sayfa</a>
+            <a href="/users" class="nav-btn nav-btn-link">Mezunlar</a>
+            <a href="/announcements" class="nav-btn nav-btn-link">Duyurular</a>
             <a href="/about" class="nav-btn nav-btn-link" style="color: #ffffff; font-weight: 700;">Hakkında</a>
             <a href="/docs" target="_blank" class="nav-btn nav-btn-docs">Swagger UI (/docs)</a>
         </div>
@@ -848,6 +867,8 @@ users_db = User._db
 # Her iki controller'ı uygulamaya register et (tanıt)
 app.include_router(user_router)
 app.include_router(api_user_router)
+app.include_router(announcement_router)
+app.include_router(api_announcement_router)
 
 # Geriye dönük uyumluluk ve doğrudan kullanım için Controller fonksiyon referansları
 create_user = ApiUserController.create
