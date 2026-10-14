@@ -8,3 +8,29 @@ services:
       - .:/app
     environment:
       - PYTHONUNBUFFERED=1
+      - DATABASE_URL=postgresql+psycopg2://${POSTGRES_USER:-alumni}:${POSTGRES_PASSWORD:-alumni_pass}@db:5432/${POSTGRES_DB:-alumni_db}
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:16-alpine
+    container_name: alumni_db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-alumni}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-alumni_pass}
+      - POSTGRES_DB=${POSTGRES_DB:-alumni_db}
+    ports:
+      - "5432:5432"
+    volumes:
+      # Named volume: konteyner silinse bile veri kalır (unutma testi için)
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-alumni} -d ${POSTGRES_DB:-alumni_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres_data:
