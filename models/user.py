@@ -1,5 +1,9 @@
 from typing import Any, Dict, List, Optional, Union
 from pydantic import BaseModel
+from sqlalchemy import func
+
+from database.session import session_scope
+from database.tables import UserTable
 
 
 class UserCreate(BaseModel):
@@ -29,15 +33,32 @@ class UserPatch(BaseModel):
     department: Optional[str] = None
 
 
+def _row_to_dict(row: UserTable) -> Dict[str, Any]:
+    return {
+        "id": row.id,
+        "first_name": row.first_name,
+        "last_name": row.last_name,
+        "email": row.email,
+        "graduation_year": row.graduation_year,
+        "department": row.department,
+    }
+
+
+def _normalize_email(payload: Dict[str, Any]) -> Dict[str, Any]:
+    """ddd.md: e-posta küçük harfle saklanır (ck_users_email_lowercase)."""
+    if isinstance(payload.get("email"), str):
+        payload["email"] = payload["email"].strip().lower()
+    return payload
+
+
 class User:
     """
-    User Model without database connection.
-    Encapsulates user data and in-memory CRUD operations.
+    User Model backed by PostgreSQL (SQLAlchemy). Table: users (see ddd.md).
+    The public CRUD API is unchanged: methods still return plain dictionaries,
+    and return None when the id does not exist (controllers turn that into 404).
+    Constraint violations (e.g. duplicate email) raise sqlalchemy IntegrityError,
+    which main.py maps to HTTP 409.
     """
-
-    # In-memory storage acting as a simulated database table
-    _db: List[Dict[str, Any]] = []
-    _auto_increment_id: int = 1
 
     def __init__(
         self,
@@ -80,7 +101,7 @@ class User:
 
     def save(self) -> "User":
         """
-        Saves or updates the current instance in the in-memory database.
+        Saves or updates the current instance in the database.
         """
         if self.id is None:
             created = User.create(self.to_dict())
@@ -96,7 +117,7 @@ class User:
     @classmethod
     def create(cls, data: Union[Dict[str, Any], UserCreate, "User"]) -> Dict[str, Any]:
         """
-        [C - Create] Creates a new user record with an auto-incrementing ID.
+        [C - Create] Creates a new user record (the database assigns the ID).
         """
         if hasattr(data, "model_dump"):
             payload = data.model_dump()
@@ -107,26 +128,27 @@ class User:
         else:
             raise ValueError("Unsupported data format for User.create")
 
-        user_id = cls._auto_increment_id
-        cls._auto_increment_id += 1
-
-        new_user = {
-            "id": user_id,
-            "first_name": payload.get("first_name"),
-            "last_name": payload.get("last_name"),
-            "email": payload.get("email"),
-            "graduation_year": payload.get("graduation_year"),
-            "department": payload.get("department"),
-        }
-        cls._db.append(new_user)
-        return new_user
+        payload = _normalize_email(payload)
+        with session_scope() as session:
+            row = UserTable(
+                first_name=payload.get("first_name"),
+                last_name=payload.get("last_name"),
+                email=payload.get("email"),
+                graduation_year=payload.get("graduation_year"),
+                department=payload.get("department"),
+            )
+            session.add(row)
+            session.flush()  # id'yi almak için
+            return _row_to_dict(row)
 
     @classmethod
     def get_all(cls) -> List[Dict[str, Any]]:
         """
         [R - Read All] Retrieves all user records.
         """
-        return cls._db
+        with session_scope() as session:
+            rows = session.query(UserTable).order_by(UserTable.id).all()
+            return [_row_to_dict(r) for r in rows]
 
     @classmethod
     def get_by_id(cls, user_id: int) -> Optional[Dict[str, Any]]:
@@ -134,10 +156,9 @@ class User:
         [R - Read by ID] Finds and returns a user record by its ID.
         Returns None if not found.
         """
-        for user in cls._db:
-            if user["id"] == user_id:
-                return user
-        return None
+        with session_scope() as session:
+            row = session.get(UserTable, user_id)
+            return _row_to_dict(row) if row else None
 
     @classmethod
     def get_by_email(cls, email: str) -> Optional[Dict[str, Any]]:
@@ -146,10 +167,9 @@ class User:
         Returns None if not found.
         """
         target_email = email.strip().lower()
-        for user in cls._db:
-            if user.get("email", "").strip().lower() == target_email:
-                return user
-        return None
+        with session_scope() as session:
+            row = session.query(UserTable).filter(UserTable.email == target_email).first()
+            return _row_to_dict(row) if row else None
 
     @classmethod
     def update(cls, user_id: int, data: Union[Dict[str, Any], UserUpdate]) -> Optional[Dict[str, Any]]:
@@ -164,15 +184,15 @@ class User:
         else:
             raise ValueError("Unsupported data format for User.update")
 
-        for user in cls._db:
-            if user["id"] == user_id:
-                user["first_name"] = payload.get("first_name", user["first_name"])
-                user["last_name"] = payload.get("last_name", user["last_name"])
-                user["email"] = payload.get("email", user["email"])
-                user["graduation_year"] = payload.get("graduation_year", user["graduation_year"])
-                user["department"] = payload.get("department", user["department"])
-                return user
-        return None
+        payload = _normalize_email(payload)
+        with session_scope() as session:
+            row = session.get(UserTable, user_id)
+            if row is None:
+                return None
+            for key in ("first_name", "last_name", "email", "graduation_year", "department"):
+                setattr(row, key, payload.get(key, getattr(row, key)))
+            session.flush()
+            return _row_to_dict(row)
 
     @classmethod
     def patch(cls, user_id: int, data: Union[Dict[str, Any], UserPatch]) -> Optional[Dict[str, Any]]:
@@ -187,11 +207,17 @@ class User:
         else:
             raise ValueError("Unsupported data format for User.patch")
 
-        for user in cls._db:
-            if user["id"] == user_id:
-                user.update(payload)
-                return user
-        return None
+        payload = _normalize_email(payload)
+        allowed = ("first_name", "last_name", "email", "graduation_year", "department")
+        with session_scope() as session:
+            row = session.get(UserTable, user_id)
+            if row is None:
+                return None
+            for key, value in payload.items():
+                if key in allowed:
+                    setattr(row, key, value)
+            session.flush()
+            return _row_to_dict(row)
 
     @classmethod
     def delete(cls, user_id: int) -> Optional[Dict[str, Any]]:
@@ -199,26 +225,32 @@ class User:
         [D - Delete] Removes a user record by ID from storage.
         Returns the deleted record or None if not found.
         """
-        for index, user in enumerate(cls._db):
-            if user["id"] == user_id:
-                return cls._db.pop(index)
-        return None
+        with session_scope() as session:
+            row = session.get(UserTable, user_id)
+            if row is None:
+                return None
+            deleted = _row_to_dict(row)
+            session.delete(row)
+            return deleted
 
     @classmethod
     def count(cls) -> int:
         """Returns the total number of users."""
-        return len(cls._db)
+        with session_scope() as session:
+            return session.query(func.count(UserTable.id)).scalar()
 
     @classmethod
     def clear(cls) -> None:
         """Clears all user records and resets the ID counter."""
-        cls._db.clear()
-        cls._auto_increment_id = 1
+        from sqlalchemy import text
+
+        with session_scope() as session:
+            session.execute(text("TRUNCATE TABLE users RESTART IDENTITY"))
 
 
 if __name__ == "__main__":
-    print("Testing User Model without database connection...")
-    
+    print("Testing User Model against the database (DATABASE_URL required)...")
+
     # 1. Test Create
     user1 = User.create({
         "first_name": "Ayşe",
@@ -234,24 +266,24 @@ if __name__ == "__main__":
     print("All Users:", users)
 
     # 3. Test Read By ID
-    found_user = User.get_by_id(1)
-    print("Found User (ID 1):", found_user)
+    found_user = User.get_by_id(user1["id"])
+    print("Found User:", found_user)
 
     # 4. Test Update (PUT)
-    updated = User.update(1, {
+    updated = User.update(user1["id"], {
         "first_name": "Ayşe Saliha",
         "last_name": "Tekgöz",
-        "email": "ayse.tekgöz@example.com",
+        "email": "ayse.tekgoz@example.com",
         "graduation_year": 2026,
         "department": "Computer Science"
     })
     print("Updated User:", updated)
 
     # 5. Test Patch (PATCH)
-    patched = User.patch(1, {"department": "Software Engineering"})
+    patched = User.patch(user1["id"], {"department": "Software Engineering"})
     print("Patched User:", patched)
 
     # 6. Test Delete
-    deleted = User.delete(1)
+    deleted = User.delete(user1["id"])
     print("Deleted User:", deleted)
     print("Remaining Users:", User.get_all())

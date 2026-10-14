@@ -2,6 +2,10 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional, Union
 
 from pydantic import BaseModel
+from sqlalchemy import text
+
+from database.session import session_scope
+from database.tables import AnnouncementTable
 
 
 class AnnouncementCreate(BaseModel):
@@ -25,15 +29,26 @@ class AnnouncementPatch(BaseModel):
     author: Optional[str] = None
 
 
+_FIELDS = ("title", "content", "author")
+
+
+def _row_to_dict(row: AnnouncementTable) -> Dict[str, Any]:
+    created = row.created_at
+    return {
+        "id": row.id,
+        "title": row.title,
+        "content": row.content,
+        "author": row.author,
+        "created_at": created.isoformat(timespec="seconds") if isinstance(created, datetime) else created,
+    }
+
+
 class Announcement:
     """
-    Announcement model without database. Data is kept in an in-memory list.
+    Announcement model backed by PostgreSQL (SQLAlchemy). Table: announcements (see ddd.md).
     All CRUD functions live here; they return None when the id does not exist
     (controllers turn that into HTTP 404).
     """
-
-    _db: List[Dict[str, Any]] = []
-    _auto_increment_id: int = 1
 
     @staticmethod
     def _to_payload(data: Union[Dict[str, Any], BaseModel], partial: bool = False) -> Dict[str, Any]:
@@ -46,58 +61,66 @@ class Announcement:
     @classmethod
     def create(cls, data: Union[Dict[str, Any], AnnouncementCreate]) -> Dict[str, Any]:
         payload = cls._to_payload(data)
-        item = {
-            "id": cls._auto_increment_id,
-            "title": payload.get("title"),
-            "content": payload.get("content"),
-            "author": payload.get("author"),
-            "created_at": datetime.now().isoformat(timespec="seconds"),
-        }
-        cls._auto_increment_id += 1
-        cls._db.append(item)
-        return item
+        with session_scope() as session:
+            row = AnnouncementTable(
+                title=payload.get("title"),
+                content=payload.get("content"),
+                author=payload.get("author"),
+            )
+            session.add(row)
+            session.flush()
+            session.refresh(row)  # created_at (server_default) değerini al
+            return _row_to_dict(row)
 
     @classmethod
     def get_all(cls) -> List[Dict[str, Any]]:
-        return cls._db
+        with session_scope() as session:
+            rows = session.query(AnnouncementTable).order_by(AnnouncementTable.id).all()
+            return [_row_to_dict(r) for r in rows]
 
     @classmethod
     def get_by_id(cls, announcement_id: int) -> Optional[Dict[str, Any]]:
-        for item in cls._db:
-            if item["id"] == announcement_id:
-                return item
-        return None
+        with session_scope() as session:
+            row = session.get(AnnouncementTable, announcement_id)
+            return _row_to_dict(row) if row else None
 
     @classmethod
     def update(cls, announcement_id: int, data: Union[Dict[str, Any], AnnouncementUpdate]) -> Optional[Dict[str, Any]]:
-        item = cls.get_by_id(announcement_id)
-        if item is None:
-            return None
         payload = cls._to_payload(data)
-        for key in ("title", "content", "author"):
-            if key in payload:
-                item[key] = payload[key]
-        return item
+        with session_scope() as session:
+            row = session.get(AnnouncementTable, announcement_id)
+            if row is None:
+                return None
+            for key in _FIELDS:
+                if key in payload:
+                    setattr(row, key, payload[key])
+            session.flush()
+            return _row_to_dict(row)
 
     @classmethod
     def patch(cls, announcement_id: int, data: Union[Dict[str, Any], AnnouncementPatch]) -> Optional[Dict[str, Any]]:
-        item = cls.get_by_id(announcement_id)
-        if item is None:
-            return None
         payload = cls._to_payload(data, partial=True)
-        for key in ("title", "content", "author"):
-            if key in payload and payload[key] is not None:
-                item[key] = payload[key]
-        return item
+        with session_scope() as session:
+            row = session.get(AnnouncementTable, announcement_id)
+            if row is None:
+                return None
+            for key in _FIELDS:
+                if key in payload and payload[key] is not None:
+                    setattr(row, key, payload[key])
+            session.flush()
+            return _row_to_dict(row)
 
     @classmethod
     def delete(cls, announcement_id: int) -> Optional[Dict[str, Any]]:
-        for index, item in enumerate(cls._db):
-            if item["id"] == announcement_id:
-                return cls._db.pop(index)
-        return None
+        with session_scope() as session:
+            row = session.get(AnnouncementTable, announcement_id)
+            if row is None:
+                return None
+            deleted = _row_to_dict(row)
+            session.delete(row)
+            return deleted
 
     @classmethod
     def clear(cls) -> None:
-        cls._db.clear()
-        cls._auto_increment_id = 1
+        with session_scope() as session:
+            session.execute(text("TRUNCATE TABLE announcements RESTART IDENTITY"))

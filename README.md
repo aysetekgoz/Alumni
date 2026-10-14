@@ -208,6 +208,33 @@ Olmayan id için her iki controller da **404** döner. Router'lar `main.py` içi
 | `PATCH` | `/api/announcements/{id}` | Kısmi güncelle |
 | `DELETE` | `/api/announcements/{id}` | Sil |
 
+## Data Design
+
+Veritabanı tasarımı ayrı bir dokümanda tutulur: **[ddd.md](ddd.md)** (Data Design Documentation). Tasarım aşamasındadır, veritabanı henüz oluşturulmamıştır.
+
+| Tablo | Özet |
+| :--- | :--- |
+| `users` | `id`, `first_name`, `last_name`, `email` (unique), `graduation_year`, `department` |
+| `announcements` | `id`, `title`, `content`, `author`, `created_at` |
+
+Ayrıntılar (kısıtlar, indeksler, ER diyagramı, açık kararlar) için [ddd.md](ddd.md) dosyasına bakın.
+
+## Environment Variables
+
+Gizli bilgiler `.env` dosyasında tutulur. `.env` **git tarafından yok sayılır** (`.gitignore`), şablon olarak [.env.example](.env.example) commit edilir.
+
+```powershell
+Copy-Item .env.example .env   # sonra değerleri düzenleyin
+```
+
+| Değişken | Açıklama |
+| :--- | :--- |
+| `POSTGRES_USER` | PostgreSQL kullanıcı adı |
+| `POSTGRES_PASSWORD` | PostgreSQL parolası |
+| `POSTGRES_DB` | Veritabanı adı |
+
+`docker-compose.yml` bu değerleri `.env` dosyasından otomatik okur. Dosya yoksa compose içindeki varsayılanlar kullanılır.
+
 ## Running the Project
 
 

@@ -1,7 +1,8 @@
 from typing import Optional
-from fastapi import FastAPI, HTTPException, status
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi import FastAPI, HTTPException, Request, status
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from pydantic import BaseModel
+from sqlalchemy.exc import IntegrityError
 
 from models.user import User, UserCreate, UserUpdate, UserPatch
 from controllers import (
@@ -861,8 +862,14 @@ def health_check():
     return {"status": "ok"}
 
 
-# In-memory veritabanı (User Model veri deposu referansı)
-users_db = User._db
+@app.exception_handler(IntegrityError)
+async def integrity_error_handler(request: Request, exc: IntegrityError):
+    """Veritabanı kısıt ihlali (örn. aynı e-posta ile ikinci kayıt) -> 409 Conflict."""
+    return JSONResponse(
+        status_code=status.HTTP_409_CONFLICT,
+        content={"detail": "Kayıt kısıtı ihlal edildi (örn. bu e-posta zaten kayıtlı)"},
+    )
+
 
 # Her iki controller'ı uygulamaya register et (tanıt)
 app.include_router(user_router)
