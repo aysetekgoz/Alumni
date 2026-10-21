@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional
 
 from faker import Faker
 
-from database.tables import AnnouncementTable, UserTable
+from database.tables import AnnouncementTable, JobPostingTable, UserTable
 
 DEPARTMENTS = [
     "Computer Engineering",
@@ -62,4 +62,42 @@ class AnnouncementFactory(BaseFactory):
         return AnnouncementTable(**self.build_data(**overrides))
 
     def build_batch(self, count: int, **overrides: Any) -> List[AnnouncementTable]:
+        return [self.build(**overrides) for _ in range(count)]
+
+
+JOB_TITLES = [
+    "Backend Developer",
+    "Frontend Developer",
+    "Data Analyst",
+    "DevOps Engineer",
+    "Project Manager",
+    "Financial Analyst",
+    "Legal Counsel",
+    "Research Assistant",
+]
+LOCATIONS = ["İstanbul", "Ankara", "İzmir", "Bursa", "Remote"]
+# ck_job_postings_employment_type ile aynı değerler
+EMPLOYMENT_TYPES = ["full_time", "part_time", "internship", "contract"]
+
+
+class JobPostingFactory(BaseFactory):
+    def build_data(self, **overrides: Any) -> Dict[str, Any]:
+        data = {
+            "title": self.fake.random_element(JOB_TITLES),
+            "company": self.fake.company(),
+            "location": self.fake.random_element(LOCATIONS),
+            "employment_type": self.fake.random_element(EMPLOYMENT_TYPES),
+            "description": self.fake.paragraph(nb_sentences=4),
+            "is_active": self.fake.boolean(chance_of_getting_true=80),
+            # posted_by seed.py tarafından (var olan kullanıcılardan) atanır
+            "posted_by": None,
+        }
+        data.update(overrides)
+        return data
+
+    def build(self, **overrides: Any) -> JobPostingTable:
+        # created_at'i veritabanı (server_default now()) atar
+        return JobPostingTable(**self.build_data(**overrides))
+
+    def build_batch(self, count: int, **overrides: Any) -> List[JobPostingTable]:
         return [self.build(**overrides) for _ in range(count)]
