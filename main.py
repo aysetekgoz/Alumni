@@ -12,6 +12,11 @@ from controllers import (
     api_user_router,
     announcement_router,
     api_announcement_router,
+    api_job_posting_router,
+    api_user_job_posting_router,
+    api_application_router,
+    api_user_application_router,
+    api_job_posting_application_router,
 )
 
 tags_metadata = [
@@ -30,6 +35,26 @@ tags_metadata = [
     {
         "name": "ApiUser",
         "description": "ApiUserController tarafından yönetilen /api/users rotaları.",
+    },
+    {
+        "name": "ApiJobPosting",
+        "description": "Doğrudan (direct) rotalar: /api/job-postings.",
+    },
+    {
+        "name": "ApiUserJobPosting",
+        "description": "İç içe (nested) rotalar: /api/users/{user_id}/job-postings.",
+    },
+    {
+        "name": "ApiApplication",
+        "description": "Doğrudan (direct) rotalar: /api/applications.",
+    },
+    {
+        "name": "ApiUserApplication",
+        "description": "İç içe (nested) rotalar: /api/users/{user_id}/applications.",
+    },
+    {
+        "name": "ApiJobPostingApplication",
+        "description": "İç içe (nested) rotalar: /api/job-postings/{job_id}/applications.",
     },
     {
         "name": "system",
@@ -876,6 +901,11 @@ app.include_router(user_router)
 app.include_router(api_user_router)
 app.include_router(announcement_router)
 app.include_router(api_announcement_router)
+app.include_router(api_job_posting_router)
+app.include_router(api_user_job_posting_router)
+app.include_router(api_application_router)
+app.include_router(api_user_application_router)
+app.include_router(api_job_posting_application_router)
 
 # Geriye dönük uyumluluk ve doğrudan kullanım için Controller fonksiyon referansları
 create_user = ApiUserController.create
