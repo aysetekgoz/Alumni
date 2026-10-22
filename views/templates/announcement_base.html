@@ -65,12 +65,13 @@
         .form-group { display: flex; flex-direction: column; gap: 0.4rem; }
         .form-group.full { grid-column: 1 / -1; }
         .form-group label { font-size: 0.85rem; font-weight: 600; color: var(--text-muted); }
-        .form-group input, .form-group textarea {
+        .form-group input, .form-group textarea, .form-group select {
             padding: 0.75rem 0.9rem; background: rgba(15,23,42,0.6);
             border: 1px solid var(--card-border); border-radius: 8px; color: #fff;
             font-family: inherit; font-size: 0.95rem; outline: none; transition: border-color 0.2s; resize: vertical;
         }
-        .form-group input:focus, .form-group textarea:focus { border-color: var(--primary); }
+        .form-group select option { background: #0f172a; color: #fff; }
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus { border-color: var(--primary); }
         .btn-submit {
             padding: 0.8rem 1.6rem; background: linear-gradient(135deg, #4f46e5, #6366f1);
             color: #fff; border: none; border-radius: 10px; font-weight: 700; font-size: 0.95rem;
@@ -129,16 +130,7 @@
     </style>
 </head>
 <body>
-    <nav>
-        <a href="/" class="logo">🎓 Alumni Tracking System</a>
-        <div class="nav-links">
-            <a href="/">Ana Sayfa</a>
-            <a href="/about">Hakkında</a>
-            <a href="/users">Mezunlar (Web CRUD)</a>
-            <a href="/announcements" style="color:#fff;font-weight:700;">Duyurular</a>
-            <a href="/api/swagger" target="_blank" class="nav-btn-docs">Swagger UI ↗</a>
-        </div>
-    </nav>
+    {% include "_navbar.html" %}
     <div class="container">
         {% block content %}{% endblock %}
     </div>

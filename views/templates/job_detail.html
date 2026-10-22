@@ -1,0 +1,71 @@
+{% extends "announcement_base.html" %}
+{% block title %}{{ job.title }}{% endblock %}
+{% block content %}
+<div class="header-card">
+    <div>
+        <h1>{{ job.title }}</h1>
+        <p>{{ job.company }} • {{ job.location }} • {{ job.employment_type|replace('_', ' ')|title }}</p>
+    </div>
+    <div class="stats-badge">{% if job.is_active %}Başvuruya Açık{% else %}Kapalı{% endif %} • #{{ job.id }}</div>
+</div>
+
+<div class="form-card" style="margin-bottom:2rem;">
+    <h2>📄 İlan Açıklaması</h2>
+    <div class="detail-content">{{ job.description }}</div>
+    <div class="item-info">🕒 Yayın tarihi: {{ job.created_at }}</div>
+</div>
+
+<div class="crud-grid">
+    <div class="form-card">
+        <h2>📨 Bu İlana Başvur</h2>
+        {% if job.is_active %}
+        <form method="POST" action="/jobs/{{ job.id }}/apply">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="user_id">Başvuran Mezun</label>
+                    <select id="user_id" name="user_id" required>
+                        <option value="" disabled selected>Seçiniz</option>
+                        {% for u in users %}
+                        <option value="{{ u.id }}">{{ u.first_name }} {{ u.last_name }} ({{ u.email }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group full">
+                    <label for="cover_letter">Ön Yazı (opsiyonel)</label>
+                    <textarea id="cover_letter" name="cover_letter" rows="4" placeholder="Kendinizi kısaca tanıtın..."></textarea>
+                </div>
+            </div>
+            <button type="submit" class="btn-submit">Başvuruyu Gönder</button>
+        </form>
+        {% else %}
+        <div class="empty-state">Bu ilan artık başvuruya kapalı.</div>
+        {% endif %}
+    </div>
+
+    <div>
+        <div class="list-header"><h2>👥 Gelen Başvurular ({{ applications|length }})</h2></div>
+        {% if applications %}
+        <div class="items-grid">
+            {% for a in applications %}
+            <div class="item-card">
+                <div>
+                    <div class="item-header">
+                        <span class="item-title">Kullanıcı #{{ a.user_id }}</span>
+                        <span class="id-badge">#{{ a.id }}</span>
+                    </div>
+                    <div class="item-badge">{{ a.status }}</div>
+                    <div class="item-info">{{ a.cover_letter or '—' }}</div>
+                    <div class="item-info">🕒 {{ a.applied_at }}</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">Henüz başvuru yok.</div>
+        {% endif %}
+    </div>
+</div>
+
+<p style="margin-top:2rem;"><a class="btn-submit" href="/jobs">← İlanlara Dön</a></p>
+{% endblock %}
+

@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional
 
 from faker import Faker
 
-from database.tables import AnnouncementTable, JobPostingTable, UserTable
+from database.tables import AnnouncementTable, ApplicationTable, JobPostingTable, UserTable
 
 DEPARTMENTS = [
     "Computer Engineering",
@@ -100,4 +100,26 @@ class JobPostingFactory(BaseFactory):
         return JobPostingTable(**self.build_data(**overrides))
 
     def build_batch(self, count: int, **overrides: Any) -> List[JobPostingTable]:
+        return [self.build(**overrides) for _ in range(count)]
+
+
+class ApplicationFactory(BaseFactory):
+    STATUSES = ["pending", "reviewed", "accepted", "rejected"]
+
+    def build_data(self, **overrides: Any) -> Dict[str, Any]:
+        data = {
+            # job_posting_id / user_id seed.py tarafından atanır (FK)
+            "job_posting_id": None,
+            "user_id": None,
+            "status": self.fake.random_element(self.STATUSES),
+            "cover_letter": self.fake.paragraph(nb_sentences=3) if self.fake.boolean(chance_of_getting_true=70) else None,
+        }
+        data.update(overrides)
+        return data
+
+    def build(self, **overrides: Any) -> ApplicationTable:
+        # applied_at'i veritabanı (server_default now()) atar
+        return ApplicationTable(**self.build_data(**overrides))
+
+    def build_batch(self, count: int, **overrides: Any) -> List[ApplicationTable]:
         return [self.build(**overrides) for _ in range(count)]

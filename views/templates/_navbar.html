@@ -1,0 +1,40 @@
+<style>
+    .sn-header {
+        display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;
+        padding: 1rem 2rem;
+        background: rgba(15, 23, 42, 0.7);
+        backdrop-filter: blur(12px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        position: sticky; top: 0; z-index: 50;
+        font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    }
+    .sn-logo { display: flex; align-items: center; gap: 0.75rem; font-size: 1.2rem; font-weight: 700; color: #fff; text-decoration: none; }
+    .sn-logo-icon {
+        width: 36px; height: 36px; border-radius: 10px; font-size: 1.1rem;
+        background: linear-gradient(135deg, #6366f1, #38bdf8);
+        display: flex; align-items: center; justify-content: center;
+    }
+    .sn-links { display: flex; gap: 0.35rem; align-items: center; flex-wrap: wrap; }
+    .sn-links a {
+        padding: 0.45rem 0.9rem; border-radius: 8px; font-size: 0.875rem; font-weight: 600;
+        color: #94a3b8; text-decoration: none; transition: all 0.2s ease;
+    }
+    .sn-links a:hover { color: #fff; background: rgba(255, 255, 255, 0.06); }
+    .sn-links a.active { color: #fff; background: rgba(99, 102, 241, 0.25); }
+    .sn-links a.sn-docs { color: #fff; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.1); margin-left: 0.5rem; }
+    .sn-links a.sn-docs:hover { background: rgba(255, 255, 255, 0.18); }
+</style>
+{% set path = request.url.path if request else '' %}
+<header class="sn-header">
+    <a href="/" class="sn-logo"><span class="sn-logo-icon">🎓</span><span>Alumni Tracking System</span></a>
+    <div class="sn-links">
+        <a href="/" class="{{ 'active' if path == '/' }}">Ana Sayfa</a>
+        <a href="/users" class="{{ 'active' if path.startswith('/users') }}">Mezunlar</a>
+        <a href="/announcements" class="{{ 'active' if path.startswith('/announcements') }}">Duyurular</a>
+        <a href="/jobs" class="{{ 'active' if path.startswith('/jobs') }}">İş İlanları</a>
+        <a href="/applications" class="{{ 'active' if path.startswith('/applications') }}">Başvurular</a>
+        <a href="/about" class="{{ 'active' if path.startswith('/about') }}">Hakkında</a>
+        <a href="/api/swagger" target="_blank" class="sn-docs">Swagger UI ↗</a>
+    </div>
+</header>
+

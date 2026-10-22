@@ -1,0 +1,99 @@
+{% extends "announcement_base.html" %}
+{% block title %}İş İlanları{% endblock %}
+{% block content %}
+<div class="header-card">
+    <div>
+        <h1>💼 İş İlanları</h1>
+        <p>Mezunlar için iş ve staj ilanlarını görüntüleyin, yeni ilan yayınlayın ve başvuru yapın.</p>
+    </div>
+    <div class="stats-badge">Toplam İlan: <span>{{ jobs|length }}</span></div>
+</div>
+
+<div class="crud-grid">
+    <div class="form-card">
+        <h2>➕ Yeni İlan Yayınla</h2>
+        <form method="POST" action="/jobs">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="title">Pozisyon</label>
+                    <input type="text" id="title" name="title" required placeholder="Örn: Backend Developer">
+                </div>
+                <div class="form-group">
+                    <label for="company">Şirket</label>
+                    <input type="text" id="company" name="company" required placeholder="Örn: Acme A.Ş.">
+                </div>
+                <div class="form-group">
+                    <label for="location">Konum</label>
+                    <input type="text" id="location" name="location" required placeholder="Örn: İstanbul">
+                </div>
+                <div class="form-group">
+                    <label for="employment_type">Çalışma Türü</label>
+                    <select id="employment_type" name="employment_type">
+                        <option value="full_time">Tam Zamanlı</option>
+                        <option value="part_time">Yarı Zamanlı</option>
+                        <option value="internship">Staj</option>
+                        <option value="contract">Sözleşmeli</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="posted_by">İlanı Yayınlayan (opsiyonel)</label>
+                    <select id="posted_by" name="posted_by">
+                        <option value="">— Seçilmedi —</option>
+                        {% for u in users %}
+                        <option value="{{ u.id }}">{{ u.first_name }} {{ u.last_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group full">
+                    <label for="description">Açıklama</label>
+                    <textarea id="description" name="description" rows="4" required placeholder="İlan detayları..."></textarea>
+                </div>
+            </div>
+            <button type="submit" class="btn-submit">İlanı Yayınla</button>
+        </form>
+    </div>
+
+    <div>
+        <div class="list-header">
+            <h2>📋 Açık Pozisyonlar</h2>
+            <input type="text" id="searchBox" class="search-input" placeholder="🔍 Pozisyon, şirket veya konuma göre ara..." onkeyup="filterItems()">
+        </div>
+
+        {% if jobs %}
+        <div class="items-grid">
+            {% for j in jobs %}
+            <div class="item-card" data-search="{{ (j.title ~ ' ' ~ j.company ~ ' ' ~ j.location)|lower }}">
+                <div>
+                    <div class="item-header">
+                        <a class="item-title" href="/jobs/{{ j.id }}">{{ j.title }}</a>
+                        <span class="id-badge">#{{ j.id }}</span>
+                    </div>
+                    <div class="item-badge">{{ j.employment_type|replace('_', ' ')|title }}</div>
+                    {% if not j.is_active %}<div class="item-badge" style="background:rgba(239,68,68,0.2);color:#f87171;">Kapalı</div>{% endif %}
+                    <div class="item-info"><strong>Şirket:</strong> {{ j.company }}</div>
+                    <div class="item-info"><strong>Konum:</strong> {{ j.location }}</div>
+                    <div class="item-info">{{ j.description[:120] }}{% if j.description|length > 120 %}…{% endif %}</div>
+                </div>
+                <div class="item-actions">
+                    <a class="btn-action btn-edit" href="/jobs/{{ j.id }}">📄 Detay &amp; Başvur</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">Henüz ilan bulunmuyor. Yukarıdaki formu kullanarak ilk ilanı yayınlayabilirsiniz.</div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+    function filterItems() {
+        const q = document.getElementById('searchBox').value.toLowerCase();
+        document.querySelectorAll('.item-card').forEach(c => {
+            c.style.display = (c.getAttribute('data-search') || '').includes(q) ? '' : 'none';
+        });
+    }
+</script>
+{% endblock %}
+

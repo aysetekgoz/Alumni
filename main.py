@@ -1,9 +1,11 @@
+import re
 from typing import Optional
 from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from pydantic import BaseModel
 from sqlalchemy.exc import IntegrityError
 
+from views.announcement_view import templates
 from models.user import User, UserCreate, UserUpdate, UserPatch
 from controllers import (
     UserController,
@@ -11,6 +13,7 @@ from controllers import (
     user_router,
     api_user_router,
     announcement_router,
+    job_router,
     api_announcement_router,
     api_job_posting_router,
     api_user_job_posting_router,
@@ -23,6 +26,10 @@ tags_metadata = [
     {
         "name": "Announcement",
         "description": "AnnouncementController tarafından yönetilen /announcements HTML rotaları.",
+    },
+    {
+        "name": "Job",
+        "description": "JobController tarafından yönetilen /jobs ve /applications HTML rotaları.",
     },
     {
         "name": "ApiAnnouncement",
@@ -418,6 +425,8 @@ LANDING_PAGE_HTML = """<!DOCTYPE html>
         <div class="nav-links">
             <a href="/users" class="nav-btn nav-btn-link">Mezunlar</a>
             <a href="/announcements" class="nav-btn nav-btn-link">Duyurular</a>
+            <a href="/jobs" class="nav-btn nav-btn-link">İş İlanları</a>
+            <a href="/applications" class="nav-btn nav-btn-link">Başvurular</a>
             <a href="/about" class="nav-btn nav-btn-link">Hakkında</a>
             <a href="/docs" target="_blank" class="nav-btn nav-btn-docs">Swagger UI (/docs)</a>
         </div>
@@ -434,6 +443,9 @@ LANDING_PAGE_HTML = """<!DOCTYPE html>
             <div class="cta-group">
                 <a href="/api/swagger" target="_blank" class="btn btn-primary">
                     <span>📖 API Dökümantasyonunu Aç</span>
+                </a>
+                <a href="/jobs" class="btn btn-secondary">
+                    <span>💼 İş İlanları</span>
                 </a>
                 <a href="/about" class="btn btn-secondary">
                     <span>ℹ️ Proje Hakkında</span>
@@ -797,6 +809,8 @@ ABOUT_PAGE_HTML = """<!DOCTYPE html>
             <a href="/" class="nav-btn nav-btn-link">Ana Sayfa</a>
             <a href="/users" class="nav-btn nav-btn-link">Mezunlar</a>
             <a href="/announcements" class="nav-btn nav-btn-link">Duyurular</a>
+            <a href="/jobs" class="nav-btn nav-btn-link">İş İlanları</a>
+            <a href="/applications" class="nav-btn nav-btn-link">Başvurular</a>
             <a href="/about" class="nav-btn nav-btn-link" style="color: #ffffff; font-weight: 700;">Hakkında</a>
             <a href="/docs" target="_blank" class="nav-btn nav-btn-docs">Swagger UI (/docs)</a>
         </div>
@@ -852,19 +866,25 @@ ABOUT_PAGE_HTML = """<!DOCTYPE html>
 """
 
 
+def _with_shared_navbar(html: str, request: Request) -> str:
+    """Ana/hakkında sayfalarındaki navbar'ı tüm sayfalarla ortak şablonla (_navbar.html) değiştirir."""
+    navbar = templates.get_template("_navbar.html").render(request=request)
+    return re.sub(r"(?s)<nav>.*?</nav>", lambda _: navbar, html, count=1)
+
+
 @app.get("/docs", include_in_schema=False)
 def docs_redirect():
     return RedirectResponse(url="/api/swagger")
 
 
 @app.get("/", response_class=HTMLResponse)
-def read_root():
-    return LANDING_PAGE_HTML
+def read_root(request: Request):
+    return _with_shared_navbar(LANDING_PAGE_HTML, request)
 
 
 @app.get("/about", response_class=HTMLResponse)
-def read_about():
-    return ABOUT_PAGE_HTML
+def read_about(request: Request):
+    return _with_shared_navbar(ABOUT_PAGE_HTML, request)
 
 
 @app.get("/hello")
@@ -901,6 +921,7 @@ app.include_router(user_router)
 app.include_router(api_user_router)
 app.include_router(announcement_router)
 app.include_router(api_announcement_router)
+app.include_router(job_router)
 app.include_router(api_job_posting_router)
 app.include_router(api_user_job_posting_router)
 app.include_router(api_application_router)

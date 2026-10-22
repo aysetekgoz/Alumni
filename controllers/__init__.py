@@ -1,6 +1,7 @@
 from .user_controller import UserController, router as user_router
 from .api_user_controller import ApiUserController, router as api_user_router
 from .announcement_controller import AnnouncementController, router as announcement_router
+from .job_controller import JobController, router as job_router
 from .api_announcement_controller import (
     ApiAnnouncementController,
     router as api_announcement_router,
@@ -25,6 +26,8 @@ __all__ = [
     "AnnouncementController",
     "ApiAnnouncementController",
     "announcement_router",
+    "JobController",
+    "job_router",
     "api_announcement_router",
     "ApiJobPostingController",
     "api_job_posting_router",
@@ -34,3 +37,4 @@ __all__ = [
     "api_user_application_router",
     "api_job_posting_application_router",
 ]
+

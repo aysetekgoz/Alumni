@@ -1,0 +1,99 @@
+{% extends "announcement_base.html" %}
+{% block title %}Başvurular{% endblock %}
+{% block content %}
+<div class="header-card">
+    <div>
+        <h1>📨 Başvurular</h1>
+        <p>Başvuru ekleyin, durumunu güncelleyin, silin ve listeleyin.</p>
+    </div>
+    <div class="stats-badge">Toplam Başvuru: <span>{{ applications|length }}</span></div>
+</div>
+
+<div class="crud-grid">
+    <div class="form-card">
+        <h2>➕ Yeni Başvuru (POST /applications)</h2>
+        <form method="POST" action="/applications">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="job_posting_id">İş İlanı</label>
+                    <select id="job_posting_id" name="job_posting_id" required>
+                        <option value="" disabled selected>Seçiniz</option>
+                        {% for j in jobs.values() %}
+                        <option value="{{ j.id }}">{{ j.title }} — {{ j.company }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="user_id">Başvuran Mezun</label>
+                    <select id="user_id" name="user_id" required>
+                        <option value="" disabled selected>Seçiniz</option>
+                        {% for u in users.values() %}
+                        <option value="{{ u.id }}">{{ u.first_name }} {{ u.last_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group full">
+                    <label for="cover_letter">Ön Yazı (opsiyonel)</label>
+                    <textarea id="cover_letter" name="cover_letter" rows="3" placeholder="Kendinizi kısaca tanıtın..."></textarea>
+                </div>
+            </div>
+            <button type="submit" class="btn-submit">Başvuruyu Kaydet</button>
+        </form>
+    </div>
+
+    <div>
+        <div class="list-header">
+            <h2>📋 Kayıtlı Başvurular (GET /applications)</h2>
+            <input type="text" id="searchBox" class="search-input" placeholder="🔍 İlan, başvuran veya duruma göre ara..." onkeyup="filterItems()">
+        </div>
+
+        {% if applications %}
+        <div class="items-grid">
+            {% for a in applications %}
+            {% set job = jobs.get(a.job_posting_id) %}
+            {% set user = users.get(a.user_id) %}
+            <div class="item-card" data-search="{{ ((job.title if job else '') ~ ' ' ~ (user.first_name ~ ' ' ~ user.last_name if user else '') ~ ' ' ~ a.status)|lower }}">
+                <div>
+                    <div class="item-header">
+                        <a class="item-title" href="/jobs/{{ a.job_posting_id }}">{{ job.title if job else 'İlan #' ~ a.job_posting_id }}</a>
+                        <span class="id-badge">#{{ a.id }}</span>
+                    </div>
+                    <div class="item-badge">{{ a.status }}</div>
+                    <div class="item-info"><strong>Başvuran:</strong> {% if user %}{{ user.first_name }} {{ user.last_name }}{% else %}#{{ a.user_id }}{% endif %}</div>
+                    {% if job %}<div class="item-info"><strong>Şirket:</strong> {{ job.company }}</div>{% endif %}
+                    <div class="item-info">{{ a.cover_letter or '—' }}</div>
+                    <div class="item-info">🕒 {{ a.applied_at }}</div>
+                </div>
+                <div class="item-actions">
+                    <form method="POST" action="/applications/{{ a.id }}/status" style="flex:2;display:flex;gap:0.4rem;">
+                        <select name="status" class="search-input" style="min-width:0;flex:1;">
+                            {% for s in ['pending','reviewed','accepted','rejected'] %}
+                            <option value="{{ s }}" {% if s == a.status %}selected{% endif %}>{{ s }}</option>
+                            {% endfor %}
+                        </select>
+                        <button type="submit" class="btn-action btn-edit" style="flex:0 0 auto;">💾</button>
+                    </form>
+                    <form method="POST" action="/applications/{{ a.id }}/delete" style="flex:1;display:flex;"
+                          onsubmit="return confirm('Bu başvuruyu silmek istediğinize emin misiniz?');">
+                        <button type="submit" class="btn-action btn-delete" style="width:100%;">🗑️ Sil</button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">Henüz başvuru bulunmuyor. Yukarıdaki formu kullanarak ilk başvuruyu ekleyebilirsiniz.</div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+    function filterItems() {
+        const q = document.getElementById('searchBox').value.toLowerCase();
+        document.querySelectorAll('.item-card').forEach(c => {
+            c.style.display = (c.getAttribute('data-search') || '').includes(q) ? '' : 'none';
+        });
+    }
+</script>
+{% endblock %}
