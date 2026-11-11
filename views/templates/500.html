@@ -1,0 +1,40 @@
+{% extends "announcement_base.html" %}
+{% block title %}{{ status_code }} Sunucu Hatası{% endblock %}
+{% block content %}
+<div class="form-card" style="max-width: 720px; margin: 2.5rem auto; text-align: center; padding: 3rem 2rem;">
+    <div style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.45rem 1.1rem; border-radius: 9999px; background: rgba(245, 158, 11, 0.18); border: 1px solid rgba(245, 158, 11, 0.45); color: #fcd34d; font-size: 0.85rem; font-weight: 700; margin-bottom: 1.5rem; text-transform: uppercase; letter-spacing: 0.05em;">
+        <span>🛡️ 5xx Guardian Middleware</span>
+    </div>
+
+    <div style="font-size: 4.5rem; font-weight: 800; line-height: 1; margin-bottom: 0.75rem; background: linear-gradient(135deg, #ffffff 0%, #fcd34d 50%, #f87171 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+        {{ status_code }}
+    </div>
+
+    <h1 style="font-size: 1.75rem; font-weight: 800; color: #ffffff; margin-bottom: 0.75rem;">
+        Sunucu Tarafında Bir Hata Oluştu
+    </h1>
+
+    <p style="color: var(--text-muted); font-size: 1rem; max-width: 540px; margin: 0 auto 1.75rem; line-height: 1.6;">
+        İsteğiniz işlenirken beklenmeyen bir sunucu hatası meydana geldi. İstek <strong>5xx Guardian Middleware</strong> tarafından güvenli şekilde yakalandı.
+    </p>
+
+    <div style="background: rgba(15, 23, 42, 0.75); border: 1px solid var(--card-border); border-radius: 14px; padding: 1.25rem 1.5rem; text-align: left; margin-bottom: 2rem;">
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.75rem; padding-bottom: 0.75rem; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">
+            <span style="font-size: 0.85rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.04em;">Hata Detayı (Reason)</span>
+            <span style="font-family: monospace; font-size: 0.85rem; background: rgba(245, 158, 11, 0.2); color: #fcd34d; padding: 0.2rem 0.6rem; border-radius: 6px; border: 1px solid rgba(245, 158, 11, 0.35);">
+                {{ method }} {{ path }}
+            </span>
+        </div>
+        <div style="color: #f8fafc; font-size: 0.98rem; line-height: 1.6; word-break: break-word;">
+            🚨 {{ reason }}
+        </div>
+    </div>
+
+    <div style="display: flex; justify-content: center; gap: 0.85rem; flex-wrap: wrap;">
+        <a href="/" class="btn-submit">🏠 Ana Sayfaya Dön</a>
+        <a href="/jobs" class="btn-action btn-edit" style="flex: 0 0 auto; padding: 0.8rem 1.4rem; font-size: 0.95rem;">💼 İş İlanları</a>
+        <a href="/users" class="btn-action btn-edit" style="flex: 0 0 auto; padding: 0.8rem 1.4rem; font-size: 0.95rem;">🎓 Mezunlar</a>
+        <a href="/announcements" class="btn-action btn-edit" style="flex: 0 0 auto; padding: 0.8rem 1.4rem; font-size: 0.95rem;">📢 Duyurular</a>
+    </div>
+</div>
+{% endblock %}

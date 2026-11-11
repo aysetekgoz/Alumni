@@ -4,14 +4,20 @@
 <div class="header-card">
     <div>
         <h1>{{ job.title }}</h1>
-        <p>{{ job.company }} • {{ job.location }} • {{ job.employment_type|replace('_', ' ')|title }}</p>
+        <p>{{ job.company }} • {{ job.city or 'Şehir belirtilmedi' }} • {{ job.employment_type|replace('_', ' ')|title }}</p>
     </div>
     <div class="stats-badge">{% if job.is_active %}Başvuruya Açık{% else %}Kapalı{% endif %} • #{{ job.id }}</div>
 </div>
 
 <div class="form-card" style="margin-bottom:2rem;">
     <h2>📄 İlan Açıklaması</h2>
-    <div class="detail-content">{{ job.description }}</div>
+    <div class="detail-content">{{ job.description or 'Açıklama belirtilmedi.' }}</div>
+    {% if job.application_url %}
+    <div class="item-info" style="margin-top:0.75rem;">
+        🔗 <strong>Başvuru Linki:</strong>
+        <a href="{{ job.application_url }}" target="_blank" rel="noopener noreferrer" style="color: #38bdf8;">{{ job.application_url }} ↗</a>
+    </div>
+    {% endif %}
     <div class="item-info">🕒 Yayın tarihi: {{ job.created_at }}</div>
 </div>
 

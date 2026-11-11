@@ -1,18 +1,16 @@
 # Data Design Documentation (DDD)
 
-> **Durum:** Yalnızca tasarım aşaması. Veritabanı **henüz oluşturulmamıştır**; uygulama hâlâ bellek içi (`_db`) depolama kullanır.
-> Bu doküman, [README.md](README.md) içindeki "Planned" PostgreSQL + SQLAlchemy geçişinin veri tasarımıdır.
+> **Durum:** PostgreSQL + SQLAlchemy ORM + Alembic migration (`0001`–`0004`) altyapısı aktif olarak uygulanmıştır.
+> Bu doküman, [README.md](README.md) içindeki ilişkisel veritabanı mimarisinin ve doğrulama kurallarının referans veri tasarımıdır.
 
 ## 1. Amaç ve Kapsam
 
 Alumni Tracking System'in kalıcı veri modelini tanımlamak:
 
 * Hangi varlıklar (entity) var, hangi alanları tutuyor?
-* Alan tipleri, kısıtlar (constraint), indeksler
-* Varlıklar arası ilişkiler
-* Mevcut Pydantic şemaları ile eşleşme
-
-**Neden gerekli?** Mevcut veri `User._db` ve `Announcement._db` listelerinde tutuluyor. Konteyner yeniden başlayınca veri kayboluyor (unutma testi başarısız oldu). Kalıcılık için ilişkisel veritabanı tasarımı gerekiyor.
+* Alan tipleri, kısıtlar (constraint), indeksler ve doğrulama kuralları
+* Varlıklar arası ilişkiler (1-N ve N-N)
+* Mevcut Pydantic şemaları ve SQLAlchemy tabloları ile eşleşme
 
 ## 2. Teknoloji Kararları
 
@@ -73,14 +71,22 @@ Kaynak: [models/announcement.py](models/announcement.py)
 
 Mezunlara yönelik iş ilanları. Kaynak: [models/job_posting.py](models/job_posting.py) (`JobPostingCreate`, `JobPostingUpdate`, `JobPostingPatch`).
 
+**İş Kuralları (Validation Rules):**
+* `title` (İlan başlığı): **Zorunlu** (`NOT NULL`), en fazla **120 karakter** (`VARCHAR(120)`).
+* `company` (Şirket adı): **Zorunlu** (`NOT NULL`).
+* `city` (Şehir / Konum): **İsteğe bağlı (opsiyonel)** (`NULL` olabilir).
+* `description` (İlan açıklaması): **İsteğe bağlı (opsiyonel)** (`NULL` olabilir).
+* `application_url` (Başvuru linki): **İsteğe bağlı (opsiyonel)** (`NULL` olabilir).
+
 | Kolon | Tip | Kısıt | Açıklama |
 | :--- | :--- | :--- | :--- |
 | `id` | `INTEGER` | **PK**, auto-increment | İlan kimliği |
-| `title` | `VARCHAR(200)` | `NOT NULL` | İlan başlığı (ör. "Backend Developer") |
-| `company` | `VARCHAR(150)` | `NOT NULL` | Şirket adı (serbest metin) |
-| `location` | `VARCHAR(150)` | `NOT NULL` | Çalışma yeri (şehir veya "Remote") |
+| `title` | `VARCHAR(120)` | `NOT NULL` | İlan başlığı — zorunlu, maks. 120 karakter (ör. "Backend Developer") |
+| `company` | `VARCHAR(150)` | `NOT NULL` | Şirket adı — zorunlu (serbest metin) |
+| `city` | `VARCHAR(150)` | `NULL` olabilir | Çalışma yeri / şehir — opsiyonel (şehir veya "Remote") |
 | `employment_type` | `VARCHAR(30)` | `NOT NULL`, `DEFAULT 'full_time'`, `CHECK (employment_type IN ('full_time','part_time','internship','contract'))` | Çalışma türü |
-| `description` | `TEXT` | `NOT NULL` | İlan detayı |
+| `description` | `TEXT` | `NULL` olabilir | İlan detayı — opsiyonel |
+| `application_url` | `VARCHAR(500)` | `NULL` olabilir | Harici başvuru linki — opsiyonel |
 | `is_active` | `BOOLEAN` | `NOT NULL`, `DEFAULT true` | İlan yayında mı |
 | `created_at` | `TIMESTAMP` | `NOT NULL`, `DEFAULT now()` | Oluşturulma zamanı |
 | `posted_by` | `INTEGER` | **FK** → `users.id`, `ON DELETE SET NULL`, `NULL` olabilir | İlanı veren mezun (opsiyonel) |
@@ -156,9 +162,10 @@ erDiagram
         int id PK
         varchar title
         varchar company
-        varchar location
+        varchar city
         varchar employment_type
         text description
+        varchar application_url
         boolean is_active
         timestamp created_at
         int posted_by FK
@@ -215,7 +222,9 @@ erDiagram
 | `AnnouncementCreate` | `announcements` | `id` ve `created_at` DB/uygulama üretir |
 | `AnnouncementUpdate` (PUT) | `announcements` | `created_at` değişmez |
 | `AnnouncementPatch` (PATCH) | `announcements` | Tüm alanlar opsiyonel |
-| `JobPostingCreate` | `job_postings` | `id` ve `created_at` DB üretir |
+| `JobPostingCreate` | `job_postings` | `title` (zorunlu, maks. 120 kr.) ve `company` (zorunlu); `city`, `description`, `application_url` opsiyonel |
+| `JobPostingUpdate` (PUT) | `job_postings` | `title` (maks. 120 kr.) ve `company` zorunlu; `city`, `description`, `application_url` opsiyonel |
+| `JobPostingPatch` (PATCH) | `job_postings` | Tüm alanlar opsiyonel (`title` gönderilirse maks. 120 kr.) |
 | `ApplicationCreate` | `applications` | `id` ve `applied_at` DB üretir, `status` varsayılan `pending` |
 | `ApplicationUpdate` (PUT) | `applications` | `job_posting_id`, `user_id` ve `applied_at` değişmez |
 | `ApplicationPatch` (PATCH) | `applications` | Yalnızca `status` ve `cover_letter`, opsiyonel |
@@ -232,21 +241,21 @@ erDiagram
 | Patch | `User.patch` | `UPDATE users SET <yalnızca gelen alanlar> WHERE id = :id` |
 | Delete | `User.delete` | `DELETE FROM users WHERE id = :id` |
 
-`announcements` için aynı kalıp geçerlidir. Bulunamayan `id` için `0 satır` etkilenir, controller bunu **404**'e çevirir (mevcut davranış).
+`announcements`, `job_postings` ve `applications` için aynı kalıp geçerlidir. Bulunamayan `id` için `None` döner, controller bunu **404**'e çevirir.
 
-## 8. Kalıcılık Planı (Uygulama aşaması için not)
+## 8. Kalıcılık ve Migration Geçmişi
 
-Şimdilik **uygulanmayacak**, sadece planlanıyor:
+* `docker-compose.yml` içinde `db` (`postgres:16-alpine`) servisi ve `postgres_data` **named volume** tanımlıdır.
+* Alembic migration dosyaları (`migrations/versions/`):
+  * `0001_initial_schema.py`: `users` ve `announcements` tabloları.
+  * `0002_create_job_postings.py`: `job_postings` tablosu ve `users` (1-N) ilişkisi.
+  * `0003_create_applications.py`: `applications` tablosu ve N-N ilişkisi.
+  * `0004_update_job_postings_rules.py`: `JobPosting` kuralları (`title` maks. 120 karakter, `city` ve `description` opsiyonel, `application_url` opsiyonel başvuru linki eklendi).
 
-* `docker-compose.yml` içine `db` (PostgreSQL) servisi ve **named volume** eklenecek. Amaç: "unutma testinin" geçmesi.
-* `requirements.txt` içine `sqlalchemy` ve bir PostgreSQL sürücüsü eklenecek.
-* Model katmanı bellek içi `_db` yerine SQLAlchemy oturumu kullanacak. Controller'lar aynı kalacak.
-* Doğrulama: kayıt oluştur, `docker compose down` ve `up`, kaydı kontrol et.
+## 9. Tamamlanan Adımlar
 
-## 9. Sonraki Adımlar
-
-- [ ] Açık tasarım kararlarını (5. bölüm) hocayla netleştir
-- [ ] ER diyagramını son haline getir
-- [ ] Veritabanını oluştur (**bu aşamada yapılmıyor**)
-- [ ] Modelleri SQLAlchemy'ye taşı
-- [ ] Unutma testini tekrar çalıştır
+- [x] ER diyagramını `users`, `announcements`, `job_postings` ve `applications` ile güncelle
+- [x] Veritabanını ve Alembic migration altyapısını oluştur (`0001`–`0004`)
+- [x] Modelleri SQLAlchemy'ye taşı
+- [x] `JobPosting` alan kurallarını (`title` maks. 120, `company` zorunlu, `city`, `description`, `application_url` opsiyonel) uygula
+- [x] Unutma testini ve seeder (`database/seed.py`) yapısını doğrula

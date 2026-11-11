@@ -1,0 +1,45 @@
+[2026-11-11 07:42:47] [HTTP 404] GET /olmayan-rota | Reason: 'GET /olmayan-rota' rotası sistemde tanımlı değil (Route not found).
+[2026-11-11 07:42:47] [HTTP 404] GET /api/users/999999 | Reason: Kullanıcı bulunamadı ('GET /api/users/999999' isteğinde aranan kayıt mevcut değil).
+[2026-11-11 07:42:47] [HTTP 500] GET /error-test | Reason: Sunucu hatası (RuntimeError): Örnek 500 sunucu hatası (5xx Guardian Test) ('GET /error-test' işlenirken oluştu).
+  File "/usr/local/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 1100, in run
+    result = context.run(func, *args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/fastapi/telemetry/_api.py", line 244, in _run_sync_endpoint
+    return function(**arguments)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/app/main.py", line 922, in error_test
+    raise RuntimeError("Örnek 500 sunucu hatası (5xx Guardian Test)")
+RuntimeError: Örnek 500 sunucu hatası (5xx Guardian Test)
+--------------------------------------------------------------------------------
+[2026-11-11 07:43:15] [HTTP 404] GET /olmayan-rota | Reason: 'GET /olmayan-rota' rotası sistemde tanımlı değil (Route not found).
+[2026-11-11 07:43:19] [HTTP 500] GET /error-test | Reason: Sunucu hatası (RuntimeError): Örnek 500 sunucu hatası (5xx Guardian Test) ('GET /error-test' işlenirken oluştu).
+  File "/usr/local/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 1100, in run
+    result = context.run(func, *args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/fastapi/telemetry/_api.py", line 244, in _run_sync_endpoint
+    return function(**arguments)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/app/main.py", line 922, in error_test
+    raise RuntimeError("Örnek 500 sunucu hatası (5xx Guardian Test)")
+RuntimeError: Örnek 500 sunucu hatası (5xx Guardian Test)
+--------------------------------------------------------------------------------
+[2026-11-11 07:43:31] [HTTP 500] GET /error-test | Reason: Sunucu hatası (RuntimeError): Örnek 500 sunucu hatası (5xx Guardian Test) ('GET /error-test' işlenirken oluştu).
+  File "/usr/local/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 1100, in run
+    result = context.run(func, *args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/fastapi/telemetry/_api.py", line 244, in _run_sync_endpoint
+    return function(**arguments)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/app/main.py", line 922, in error_test
+    raise RuntimeError("Örnek 500 sunucu hatası (5xx Guardian Test)")
+RuntimeError: Örnek 500 sunucu hatası (5xx Guardian Test)
+--------------------------------------------------------------------------------
+[2026-11-11 07:43:31] [HTTP 404] GET /favicon.ico | Reason: 'GET /favicon.ico' rotası sistemde tanımlı değil (Route not found).
+[2026-11-11 07:43:36] [HTTP 404] GET /olmayan-rota | Reason: 'GET /olmayan-rota' rotası sistemde tanımlı değil (Route not found).
+[2026-11-11 07:43:36] [HTTP 404] GET /favicon.ico | Reason: 'GET /favicon.ico' rotası sistemde tanımlı değil (Route not found).
+[2026-11-11 07:54:42] [HTTP 404] GET /gecersiz-sayfa | Reason: 'GET /gecersiz-sayfa' rotası sistemde tanımlı değil (Route not found).
+[2026-11-11 07:54:42] [HTTP 404] GET /gecersiz-sayfa | Reason: 'GET /gecersiz-sayfa' rotası sistemde tanımlı değil (Route not found).
+[2026-11-11 07:55:35] [HTTP 404] GET /gecersiz-sayfa | Reason: 'GET /gecersiz-sayfa' rotası sistemde tanımlı değil (Route not found).
+[2026-11-11 07:55:35] [HTTP 404] GET /favicon.ico | Reason: 'GET /favicon.ico' rotası sistemde tanımlı değil (Route not found).
+[2026-11-11 07:55:45] [HTTP 404] GET /jobs/999999 | Reason: İş ilanı bulunamadı ('GET /jobs/999999' isteğinde aranan kayıt mevcut değil).
+[2026-11-11 08:04:52] [HTTP 404] GET /users/38 | Reason: Kullanıcı bulunamadı ('GET /users/38' isteğinde aranan kayıt mevcut değil).

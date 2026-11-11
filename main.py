@@ -6,6 +6,11 @@ from pydantic import BaseModel
 from sqlalchemy.exc import IntegrityError
 
 from views.announcement_view import templates
+from middlewares import (
+    LoggerMiddleware,
+    NotFoundGuardianMiddleware,
+    ServerErrorGuardianMiddleware,
+)
 from models.user import User, UserCreate, UserUpdate, UserPatch
 from controllers import (
     UserController,
@@ -76,6 +81,10 @@ app = FastAPI(
     docs_url="/api/swagger",
     openapi_tags=tags_metadata,
 )
+
+app.add_middleware(NotFoundGuardianMiddleware)
+app.add_middleware(ServerErrorGuardianMiddleware)
+app.add_middleware(LoggerMiddleware)
 
 LANDING_PAGE_HTML = """<!DOCTYPE html>
 <html lang="tr">
@@ -905,6 +914,41 @@ def sum_numbers(number1: int, number2: int):
 @app.get("/api/health", tags=["system"], summary="Service Health Check")
 def health_check():
     return {"status": "ok"}
+
+
+@app.get("/404", response_class=HTMLResponse, tags=["system"], summary="Generic 404 Not Found Page")
+def generic_404_page(
+    request: Request,
+    path: str = "/404",
+    method: str = "GET",
+    reason: str = "İstediğiniz sayfa veya kaynak sistemde bulunamadı (404 Not Found).",
+):
+    """Geçersiz isteklerin yönlendirildiği genel (generic) 404 hata sayfası."""
+    return templates.TemplateResponse(
+        request,
+        "404.html",
+        {
+            "status_code": status.HTTP_404_NOT_FOUND,
+            "error": "Not Found",
+            "reason": reason,
+            "detail": reason,
+            "method": method,
+            "path": path,
+        },
+        status_code=status.HTTP_404_NOT_FOUND,
+    )
+
+
+@app.get("/error-test", tags=["system"], summary="5xx Guardian HTML Test Route")
+def error_test():
+    """5xx Guardian Middleware'i tarayıcıda (HTML) test etmek için örnek sunucu hatası fırlatır."""
+    raise RuntimeError("Örnek 500 sunucu hatası (5xx Guardian Test)")
+
+
+@app.get("/api/error-test", tags=["system"], summary="5xx Guardian JSON API Test Route")
+def api_error_test():
+    """5xx Guardian Middleware'i API (JSON) üzerinden test etmek için örnek sunucu hatası fırlatır."""
+    raise RuntimeError("Örnek 500 API sunucu hatası (5xx Guardian Test)")
 
 
 @app.exception_handler(IntegrityError)

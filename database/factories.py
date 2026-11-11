@@ -75,7 +75,7 @@ JOB_TITLES = [
     "Legal Counsel",
     "Research Assistant",
 ]
-LOCATIONS = ["İstanbul", "Ankara", "İzmir", "Bursa", "Remote"]
+CITIES = ["İstanbul", "Ankara", "İzmir", "Bursa", "Remote"]
 # ck_job_postings_employment_type ile aynı değerler
 EMPLOYMENT_TYPES = ["full_time", "part_time", "internship", "contract"]
 
@@ -83,11 +83,12 @@ EMPLOYMENT_TYPES = ["full_time", "part_time", "internship", "contract"]
 class JobPostingFactory(BaseFactory):
     def build_data(self, **overrides: Any) -> Dict[str, Any]:
         data = {
-            "title": self.fake.random_element(JOB_TITLES),
+            "title": self.fake.random_element(JOB_TITLES)[:120],
             "company": self.fake.company(),
-            "location": self.fake.random_element(LOCATIONS),
+            "city": self.fake.random_element(CITIES) if self.fake.boolean(chance_of_getting_true=85) else None,
             "employment_type": self.fake.random_element(EMPLOYMENT_TYPES),
-            "description": self.fake.paragraph(nb_sentences=4),
+            "description": self.fake.paragraph(nb_sentences=4) if self.fake.boolean(chance_of_getting_true=85) else None,
+            "application_url": self.fake.url() if self.fake.boolean(chance_of_getting_true=50) else None,
             "is_active": self.fake.boolean(chance_of_getting_true=80),
             # posted_by seed.py tarafından (var olan kullanıcılardan) atanır
             "posted_by": None,

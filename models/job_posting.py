@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Any, Dict, List, Literal, Optional, Union
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy import text
 
 from database.session import session_scope
@@ -12,10 +12,11 @@ EmploymentType = Literal["full_time", "part_time", "internship", "contract"]
 
 class JobPostingCreate(BaseModel):
     """Schema for creating a job posting (id and created_at are auto-assigned)."""
-    title: str
-    company: str
-    location: str
-    description: str
+    title: str = Field(..., min_length=1, max_length=120)
+    company: str = Field(..., min_length=1, max_length=150)
+    city: Optional[str] = Field(default=None, max_length=150)
+    description: Optional[str] = None
+    application_url: Optional[str] = Field(default=None, max_length=500)
     employment_type: EmploymentType = "full_time"
     is_active: bool = True
     posted_by: Optional[int] = None  # users.id (FK), optional
@@ -23,29 +24,31 @@ class JobPostingCreate(BaseModel):
 
 class JobPostingUpdate(BaseModel):
     """Schema for full update (PUT)."""
-    title: str
-    company: str
-    location: str
-    description: str
-    employment_type: EmploymentType
-    is_active: bool
+    title: str = Field(..., min_length=1, max_length=120)
+    company: str = Field(..., min_length=1, max_length=150)
+    city: Optional[str] = Field(default=None, max_length=150)
+    description: Optional[str] = None
+    application_url: Optional[str] = Field(default=None, max_length=500)
+    employment_type: EmploymentType = "full_time"
+    is_active: bool = True
     posted_by: Optional[int] = None
 
 
 class JobPostingPatch(BaseModel):
     """Schema for partial update (PATCH)."""
-    title: Optional[str] = None
-    company: Optional[str] = None
-    location: Optional[str] = None
+    title: Optional[str] = Field(default=None, min_length=1, max_length=120)
+    company: Optional[str] = Field(default=None, min_length=1, max_length=150)
+    city: Optional[str] = Field(default=None, max_length=150)
     description: Optional[str] = None
+    application_url: Optional[str] = Field(default=None, max_length=500)
     employment_type: Optional[EmploymentType] = None
     is_active: Optional[bool] = None
     posted_by: Optional[int] = None
 
 
 _FIELDS = (
-    "title", "company", "location", "description",
-    "employment_type", "is_active", "posted_by",
+    "title", "company", "city", "description",
+    "application_url", "employment_type", "is_active", "posted_by",
 )
 
 
@@ -55,9 +58,10 @@ def _row_to_dict(row: JobPostingTable) -> Dict[str, Any]:
         "id": row.id,
         "title": row.title,
         "company": row.company,
-        "location": row.location,
+        "city": row.city,
         "employment_type": row.employment_type,
         "description": row.description,
+        "application_url": row.application_url,
         "is_active": row.is_active,
         "posted_by": row.posted_by,
         "created_at": created.isoformat(timespec="seconds") if isinstance(created, datetime) else created,

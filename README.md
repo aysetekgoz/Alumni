@@ -6,242 +6,243 @@ This project is an **Alumni Tracking System** developed for the Web Programming 
 
 * **Backend:** FastAPI (Python)
 * **API Documentation:** Swagger UI & OpenAPI (Automated)
-* **Database:** PostgreSQL
-* **ORM:** SQLAlchemy
+* **Database:** PostgreSQL 16
+* **ORM & Migrations:** SQLAlchemy & Alembic
+* **Templating (View):** Jinja2 HTML Templates
 * **Containerization:** Docker & Docker Compose
 
-## MVC Architecture
+## MVC + Middleware Architecture
 
-The application adopts the **Model-View-Controller (MVC)** architectural design pattern to ensure separation of concerns, maintainability, and scalability. Each layer has clearly defined responsibilities:
+The application adopts the **Model-View-Controller (MVC)** architectural design pattern combined with a **Guardian & Logger Middleware** pipeline to ensure separation of concerns, observability, error resilience, and maintainability:
 
 ```mermaid
 flowchart TD
     Client(["Client (Browser / Postman / Swagger UI)"])
 
+    subgraph MiddlewareLayer ["Middleware Layer (middlewares/)"]
+        Logger["LoggerMiddleware<br/>• Terminal request log: HH:MM:SS METHOD /route status ms"]
+        Guardian5xx["ServerErrorGuardianMiddleware (5xx)<br/>• Catches 500–599 & unhandled exceptions<br/>• Logs traceback to logs/error.logs"]
+        Guardian404["NotFoundGuardianMiddleware (404)<br/>• Catches 404 with reason<br/>• Redirects invalid web requests to /404"]
+    end
+
     subgraph ControllerLayer ["Controller Layer (controllers/)"]
-        Router["Controllers & Routers<br/>• UserController (/users)<br/>• ApiUserController (/api/users)<br/>• Root & Navigation Routes (/)"]
+        Router["Controllers & Routers<br/>• UserController & ApiUserController<br/>• AnnouncementController & ApiAnnouncementController<br/>• JobController & ApiJobPostingController<br/>• ApiApplicationController"]
     end
 
-    subgraph ModelLayer ["Model Layer (Data & Validation)"]
-        Schemas["Pydantic Schemas<br/>• UserCreate<br/>• UserUpdate<br/>• UserPatch"]
-        Storage["Data Store<br/>• users_db (In-Memory)<br/>• PostgreSQL (SQLAlchemy ORM - Planned)"]
+    subgraph ModelLayer ["Model Layer (models/ & database/)"]
+        Schemas["Pydantic Schemas<br/>• UserCreate / Update / Patch<br/>• AnnouncementCreate / Update / Patch<br/>• JobPostingCreate / Update / Patch<br/>• ApplicationCreate / Update / Patch"]
+        Storage["PostgreSQL Database (SQLAlchemy ORM)<br/>• users, announcements, job_postings, applications"]
     end
 
-    subgraph ViewLayer ["View Layer (Presentation & Serialization)"]
-        HTMLViews["Web Pages (HTMLResponse)<br/>• Landing Page UI<br/>• About Page UI"]
-        JSONViews["JSON Responses<br/>• Serialized User DTOs<br/>• Status & Error Messages"]
-        DocViews["Interactive Docs<br/>• Swagger UI (/api/swagger)<br/>• OpenAPI Spec (/openapi.json)"]
+    subgraph ViewLayer ["View Layer (views/ & templates/)"]
+        HTMLViews["Jinja2 Web Pages (HTMLResponse)<br/>• Landing, About, Users, Announcements<br/>• Jobs, Job Detail, Applications<br/>• 404.html & 500.html Guardian Pages"]
+        JSONViews["JSON Responses<br/>• REST API DTOs & Guardian Reason Payloads"]
+        DocViews["Interactive Docs<br/>• Swagger UI (/api/swagger)"]
     end
 
-    Client -->|"1. HTTP Request"| Router
-    Router -->|"2. Validates & queries"| Schemas
-    Schemas -->|"3. Data operations"| Storage
-    Storage -->|"4. Returns state"| Router
-    Router -->|"5. Dispatches data"| ViewLayer
-    ViewLayer -->|"6. HTTP Response (HTML/JSON)"| Client
+    Client -->|"1. HTTP Request"| Logger
+    Logger --> Guardian5xx
+    Guardian5xx --> Guardian404
+    Guardian404 -->|"2. Dispatches route"| Router
+    Router -->|"3. Validates & queries"| Schemas
+    Schemas -->|"4. ORM operations"| Storage
+    Storage -->|"5. Returns state"| Router
+    Router -->|"6. Renders view"| ViewLayer
+    ViewLayer -->|"7. HTTP Response (HTML/JSON)"| Client
 ```
 
 ---
 
 ### 1. Model (M) — Data Representation, Validation & CRUD Logic
 
-The **Model** layer encapsulates the data structures, validation rules, state management, and CRUD operations:
+The **Model** layer encapsulates the data structures, validation rules, SQLAlchemy ORM persistence, and CRUD operations:
 
 * **User Model (`models/user.py`):**
-  * Implemented without database connection using simulated in-memory storage (`_db`).
-  * Features complete CRUD functions:
-    * `User.create(data)`: Generates auto-incrementing ID and saves user record.
-    * `User.get_all()`: Retrieves all user records.
-    * `User.get_by_id(user_id)` & `User.get_by_email(email)`: Finds specific user records.
-    * `User.update(user_id, data)`: Performs full update (PUT) on existing records.
-    * `User.patch(user_id, data)`: Performs partial update (PATCH) on specified fields.
-    * `User.delete(user_id)`: Removes records by ID.
-* **Data Validation & Schemas (Pydantic):**
-  * `UserCreate`: Validates attributes required to register an alumnus (`first_name`, `last_name`, `email`, `graduation_year`, `department`).
-  * `UserUpdate`: Enforces schema requirements for full entity updates via `PUT`.
-  * `UserPatch`: Provides optional fields for granular, partial updates via `PATCH`.
-* **Data Storage & State:**
-  * In-memory store (`User._db`) maintains runtime state without requiring external database services.
-  * Architecturally prepared for seamless migration to **PostgreSQL** via **SQLAlchemy ORM** models.
+  * Backed by PostgreSQL (`users` table).
+  * CRUD functions: `User.create`, `User.get_all`, `User.get_by_id`, `User.get_by_email`, `User.update`, `User.patch`, `User.delete`.
+* **Announcement Model (`models/announcement.py`):**
+  * Backed by PostgreSQL (`announcements` table).
+  * CRUD functions: `Announcement.create`, `Announcement.get_all`, `Announcement.get_by_id`, `Announcement.update`, `Announcement.patch`, `Announcement.delete`.
+* **JobPosting Model (`models/job_posting.py`):**
+  * Backed by PostgreSQL (`job_postings` table, 1-N relationship with `users` via `posted_by`).
+  * **Validation Rules (`JobPostingCreate`, `JobPostingUpdate`, `JobPostingPatch`):**
+    * `title`: **Required**, max **120 characters** (`VARCHAR(120)`).
+    * `company`: **Required** (`VARCHAR(150)`).
+    * `city`: **Optional** (`VARCHAR(150)`, nullable).
+    * `description`: **Optional** (`TEXT`, nullable).
+    * `application_url`: **Optional** external application link (`VARCHAR(500)`, nullable).
+* **Application Model (`models/application.py`):**
+  * Backed by PostgreSQL (`applications` table, N-N relationship between `users` and `job_postings`).
 
 ### 2. View (V) — Presentation & Serialization
 
-The **View** layer is responsible for formatting and presenting data to clients and users:
+The **View** layer formats and presents data to clients and users:
 
-* **HTML Views:**
-  * `LANDING_PAGE_HTML`: Responsive landing page view served at `GET /` with navigation and system highlights.
-  * `ABOUT_PAGE_HTML`: Information page view served at `GET /about` describing the project scope.
+* **HTML Views (`views/` & `views/templates/`):**
+  * `users.html`, `announcements.html`, `announcement_detail.html`, `announcement_edit.html`, `jobs.html`, `job_detail.html`, `applications.html`.
+  * `404.html`: Generic 404 Guardian error page matching the application's glassmorphism theme, displaying the error `reason`, `method`, and `path`.
+  * `500.html`: 5xx Guardian server error page displaying the `status_code` and `reason`.
 * **REST API JSON Views:**
-  * Standardized JSON structures serialized from Python dictionaries and Pydantic schemas, returning entity data, status codes, and operational messages.
+  * Standardized JSON structures serialized from Python dictionaries and Pydantic schemas.
 * **Interactive Documentation Views:**
-  * **Swagger UI** (`/api/swagger`, `/docs`) and the **OpenAPI Schema** (`/openapi.json`), offering live interactive interfaces for inspecting and executing endpoints.
+  * **Swagger UI** (`/api/swagger`, `/docs`) and the **OpenAPI Schema** (`/openapi.json`).
 
 ### 3. Controller (C) — Request Handling & Application Logic
 
-The **Controller** layer intercepts incoming HTTP requests, coordinates validation, executes business logic via the Model, and delegates to the appropriate view:
-
-* **UserController (`controllers/user_controller.py`):**
-  * `/users` yoluna bağlı kullanıcı kontrolcüsüdür.
-  * Sunum için **View katmanını (`views/user_view.py`)** kullanır. Kendisi veri tutmaz, Model katmanını (`User`) çağırır.
-  * Web sayfası (`/users`) üzerinden **Tüm CRUD Operasyonlarının** interaktif olarak yönetilmesini sağlar:
-    * `GET  /users` $\rightarrow$ **Listing / Read All (R):** Modelden kullanıcıları çeker ve `UserView` üzerinden listeler. Arama/filtreleme çubuğu içerir.
-    * `GET  /users/{id}` $\rightarrow$ **Read One (R):** Belirtilen ID'deki mezun detayını görüntüler.
-    * `POST /users` $\rightarrow$ **Creating (C):** Sayfadaki HTML formu üzerinden yeni mezun kaydı ekler (HTTP 201).
-    * `POST /users/{id}/update` & `PUT /users/{id}` $\rightarrow$ **Updating (U):** Web sayfasındaki interaktif düzenleme modalı (Edit Modal) üzerinden mezun bilgilerini günceller.
-    * `POST /users/{id}/delete` & `DELETE /users/{id}` $\rightarrow$ **Deleting (D):** Web sayfasındaki silme butonuyla mezun kaydını siler ve listeyi tazeler.
-  * Swagger UI üzerinde **"User"** grubu altında listelenir.
-
-* **ApiUserController (`controllers/api_user_controller.py`):**
-  * `/api/users` yoluna bağlı bağımsız REST API kontrolcüsüdür (`UserController`'dan miras almaz).
-  * Aynı CRUD işlemlerini kendi içinde ayrı ayrı tanımlar ve aynı model katmanını (`User`) çağırarak JSON yanıtlar döner.
-  * Swagger UI üzerinde **"ApiUser"** grubu altında listelenir.
-
-* **View Katmanı (`views/`):**
-  * `views/user_view.py`: `UserView` sınıfı, şablon verisini bağlayıp `HTMLResponse` üretir.
-  * `views/templates/users.html`: Modern Jinja2 HTML şablonu (Mezun listesi + Yeni mezun ekleme formu).
-
-* **Paylaşılan Bellek İçi Veri Kaynağı (Shared In-Memory Storage):**
-  * Her iki controller da (`/users` ve `/api/users`) aynı bellekteki veri kaynağını (`User._db`) paylaştığı için birinden eklenen kayıt diğerinden de doğrudan görünür ve güncellenebilir.
+* **Web (HTML) Controllers:**
+  * `UserController` (`/users`)
+  * `AnnouncementController` (`/announcements`)
+  * `JobController` (`/jobs`, `/applications`)
+* **REST API (JSON) Controllers:**
+  * `ApiUserController` (`/api/users`)
+  * `ApiAnnouncementController` (`/api/announcements`)
+  * `ApiJobPostingController` (`/api/job-postings` and `/api/users/{user_id}/job-postings`)
+  * `ApiApplicationController` (`/api/applications`, `/api/users/{user_id}/applications`, `/api/job-postings/{job_id}/applications`)
 
 ---
 
-### MVC Component Mapping Table
+## Middleware & Error Logging (`middlewares/` & `logs/error.logs`)
 
-| MVC Component | Application Artifact | File / Location | Description |
-| :--- | :--- | :--- | :--- |
-| **Model** | `User` Model (CRUD: `create`, `get_all`, `get_by_id`, `update`, `patch`, `delete`) | `models/user.py` | Bellek içi kullanıcı veri modeli ve CRUD veri yönetimi |
-| **Model** | `UserCreate`, `UserUpdate`, `UserPatch` | `models/user.py` | Pydantic veri şemaları ve girdi doğrulama |
-| **Model** | `User._db` (In-Memory Store) | `models/user.py` | Ortak bellek içi veri saklama listesi |
-| **View** | `UserView` & `users.html` (Jinja2) | `views/` | `/users` için interaktif web CRUD arayüzü (Arama, Liste, Ekleme, Düzenleme, Silme) |
-| **View** | `LANDING_PAGE_HTML`, `ABOUT_PAGE_HTML` | `main.py` | İstemci karşılama HTML sayfaları |
-| **View** | JSON Responses & HTTP Statuses | `controllers/api_user_controller.py` | REST API için serileştirilmiş JSON veri yanıtları |
-| **View** | Swagger UI & OpenAPI Specification | `/api/swagger`, `/openapi.json` | İnteraktif API dokümantasyon arayüzü |
-| **Controller** | `UserController` (`/users`) | `controllers/user_controller.py` | Web arayüzü ve View katmanı ile tam CRUD operasyonları (C, R, U, D) |
-| **Controller** | `ApiUserController` (`/api/users`) | `controllers/api_user_controller.py` | Bağımsız REST API CRUD kontrolcüsü (Swagger: "ApiUser") |
-| **Controller** | Root Route Handlers (`/`, `/about`, `/health`) | `main.py` | Sistem seviyesi navigasyon ve sağlık kontrolü rotaları |
+| Middleware / Module | File | Description |
+| :--- | :--- | :--- |
+| **LoggerMiddleware** | `middlewares/logger_middleware.py` | Logs every incoming HTTP request to the terminal in the format: `HH:MM:SS  METHOD /route status_code duration ms` (e.g. `10:20:30  POST /user 201 18 ms`). Also logs non-404 `4xx` errors to `logs/error.logs`. |
+| **NotFoundGuardianMiddleware (404 Guardian)** | `middlewares/not_found_guardian_middleware.py` | Intercepts all `404 Not Found` responses, determines the exact `reason` (undefined route vs. missing database record), logs the error to `logs/error.logs`, redirects invalid web/browser requests (`302 Found`) to the generic `/404` page, and returns JSON with `reason` for `/api/...` requests. |
+| **ServerErrorGuardianMiddleware (5xx Guardian)** | `middlewares/server_error_guardian_middleware.py` | Intercepts all `500–599` responses and unhandled runtime exceptions, writes the error reason and stack trace to `logs/error.logs` (instead of cluttering the terminal), and returns `500.html` (for browser requests) or a JSON error payload with `reason` (for `/api/...` requests). |
+| **Error Logger** | `middlewares/error_logger.py` | Writes structured error entries and tracebacks to `logs/error.logs`. |
+
+### Testing the Middlewares & Inspecting Logs
+
+1. **Terminal Request Logs (`LoggerMiddleware`):**
+   ```powershell
+   docker compose logs -f web
+   ```
+   Example output:
+   ```text
+   alumni_web  | 06:57:55  GET /jobs 200 129 ms
+   alumni_web  | 06:57:55  POST /api/job-postings 201 18 ms
+   ```
+2. **404 Guardian & Generic `/404` Redirect:**
+   * Visit an invalid URL in your browser (e.g. [http://localhost:8000/gecersiz-sayfa](http://localhost:8000/gecersiz-sayfa) or [http://localhost:8000/jobs/999999](http://localhost:8000/jobs/999999)) — it automatically redirects to `/404?path=...&method=...&reason=...` and displays the styled 404 Guardian page.
+   * Or test the JSON API: `curl.exe http://localhost:8000/api/users/999999`.
+3. **5xx Guardian:**
+   * Visit [http://localhost:8000/error-test](http://localhost:8000/error-test) in your browser to see the styled 500 Guardian page, or run `curl.exe http://localhost:8000/api/error-test` for the JSON response.
+4. **Error Log File (`logs/error.logs`):**
+   ```powershell
+   Get-Content logs\error.logs
+   ```
 
 ---
 
-### Project Modular Directory Structure
+## Project Modular Directory Structure
 
 ```text
 Alumni/
-├── controllers/             # Controller: Request handling & CRUD orchestration
+├── controllers/                             # Controller layer: HTML & REST API request handling
 │   ├── __init__.py
-│   ├── user_controller.py   # UserController & /users router (Tag: User - Full CRUD with View)
-│   └── api_user_controller.py # ApiUserController & /api/users router (Tag: ApiUser - REST API)
-├── views/                   # View: UI Templates & View Classes
+│   ├── user_controller.py                   # /users (HTML CRUD)
+│   ├── api_user_controller.py               # /api/users (JSON REST API)
+│   ├── announcement_controller.py           # /announcements (HTML CRUD)
+│   ├── api_announcement_controller.py       # /api/announcements (JSON REST API)
+│   ├── job_controller.py                    # /jobs & /applications (HTML CRUD)
+│   ├── api_job_posting_controller.py        # /api/job-postings & nested user routes
+│   └── api_application_controller.py        # /api/applications & nested routes
+├── middlewares/                             # Middleware layer: Logging & Error Guardians
 │   ├── __init__.py
-│   ├── user_view.py         # UserView class (HTMLResponse generator)
+│   ├── logger_middleware.py                 # Terminal request logger (time method route status ms)
+│   ├── not_found_guardian_middleware.py     # 404 Guardian (reason + redirect to /404)
+│   ├── server_error_guardian_middleware.py  # 5xx Guardian (catches 500s & exceptions)
+│   └── error_logger.py                      # Writes error details & tracebacks to logs/error.logs
+├── models/                                  # Model layer: Pydantic schemas & SQLAlchemy CRUD
+│   ├── __init__.py
+│   ├── user.py
+│   ├── announcement.py
+│   ├── job_posting.py
+│   └── application.py
+├── database/                                # Database engine, session, ORM tables, factories & seed
+│   ├── __init__.py
+│   ├── session.py
+│   ├── tables.py
+│   ├── factories.py
+│   └── seed.py
+├── migrations/                              # Alembic schema migrations (0001 to 0004)
+│   ├── env.py
+│   └── versions/
+│       ├── 0001_initial_schema.py
+│       ├── 0002_create_job_postings.py
+│       ├── 0003_create_applications.py
+│       └── 0004_update_job_postings_rules.py
+├── views/                                   # View layer: View classes & Jinja2 HTML templates
+│   ├── __init__.py
+│   ├── user_view.py
+│   ├── announcement_view.py
+│   ├── job_view.py
 │   └── templates/
-│       └── users.html       # Jinja2 HTML template (CRUD Web Interface)
-├── models/                  # Model: Pydantic schemas & In-Memory Data Model
-│   ├── __init__.py
-│   └── user.py              # User model with in-memory storage (_db) & CRUD
+│       ├── _navbar.html
+│       ├── announcement_base.html
+│       ├── users.html
+│       ├── announcements.html
+│       ├── announcement_detail.html
+│       ├── announcement_edit.html
+│       ├── jobs.html
+│       ├── job_detail.html
+│       ├── applications.html
+│       ├── 404.html
+│       └── 500.html
+├── logs/
+│   └── error.logs                           # Persistent error & exception log file
+├── ddd.md                                   # Data Design Documentation (ER Diagram & Table Rules)
+├── alembic.ini
 ├── Dockerfile
 ├── docker-compose.yml
 ├── requirements.txt
-├── main.py                  # Application entrypoint & controller registration
+├── main.py                                  # Application entrypoint, middleware & router registration
 └── README.md
 ```
 
-## Interactive API Documentation (Swagger UI)
+---
 
-FastAPI automatically generates interactive Swagger UI documentation and OpenAPI specifications from the defined routes, controllers, and Pydantic schemas:
+## Data Design ([ddd.md](ddd.md))
 
-* **Swagger UI:** [http://localhost:8000/api/swagger](http://localhost:8000/api/swagger) (also redirects from `/docs`)
-* **OpenAPI JSON:** [http://localhost:8000/openapi.json](http://localhost:8000/openapi.json)
+The relational database schema and validation rules are documented in **[ddd.md](ddd.md)** (Data Design Documentation):
 
-Swagger dokümantasyonunda rotalar iki ayrı grup altında gösterilmektedir:
-* **"User"** grubu: `UserController` tarafından View katmanı ile sunulan `/users` rotaları.
-* **"ApiUser"** grubu: `ApiUserController` tarafından yönetilen `/api/users` REST rotaları.
-
-| Tag | Method | Endpoint | Controller | Description |
-| :--- | :--- | :--- | :--- | :--- |
-| `system` | `GET` | `/api/health` | Root Controller | Service health check |
-| `User` | `GET` | `/users` | `UserController` | **Read All (R):** Web arayüzü ile tüm mezunları listele & ara (HTML) |
-| `User` | `GET` | `/users/{user_id}` | `UserController` | **Read One (R):** Tekil mezun detayını getir (HTML/JSON) |
-| `User` | `POST` | `/users` | `UserController` | **Create (C):** Web formu ile yeni mezun ekle (HTML Form / JSON) |
-| `User` | `POST` | `/users/{user_id}/update` | `UserController` | **Update (U):** Web düzenleme modalı üzerinden güncelle (HTML Form) |
-| `User` | `PUT` | `/users/{user_id}` | `UserController` | **Update (U):** HTTP PUT ile mezun güncelle |
-| `User` | `POST` | `/users/{user_id}/delete` | `UserController` | **Delete (D):** Web sil butonu üzerinden mezun kaydını sil (HTML Form) |
-| `User` | `DELETE` | `/users/{user_id}` | `UserController` | **Delete (D):** HTTP DELETE ile mezun kaydını sil |
-| `ApiUser` | `GET` | `/api/users` | `ApiUserController` | REST API: Tüm kullanıcıları listele (JSON) |
-| `ApiUser` | `GET` | `/api/users/{user_id}` | `ApiUserController` | REST API: Kullanıcı detayını getir |
-| `ApiUser` | `POST` | `/api/users` | `ApiUserController` | REST API: Yeni kullanıcı oluştur (HTTP 201) |
-| `ApiUser` | `PUT` | `/api/users/{user_id}` | `ApiUserController` | REST API: Kullanıcı bilgilerini tamamen güncelle |
-| `ApiUser` | `PATCH` | `/api/users/{user_id}` | `ApiUserController` | REST API: Kullanıcı bilgilerini kısmen güncelle |
-| `ApiUser` | `DELETE` | `/api/users/{user_id}` | `ApiUserController` | REST API: Kullanıcı kaydını sil |
-
-## Announcement Module (Duyurular — veritabanısız)
-
-### Yeni dosyalar
-
-| Dosya | Açıklama |
+| Table | Summary |
 | :--- | :--- |
-| `models/announcement.py` | `Announcement` modeli (bellek içi liste `_db`; `id` ve `created_at` otomatik) + `create/get_all/get_by_id/update/patch/delete` ve Pydantic şemaları |
-| `controllers/announcement_controller.py` | `AnnouncementController` — HTML sayfalar, kendi `/announcements` router'ı (tag: `Announcement`). Tüm kullanıcı metinleri `html.escape` ile basılır (XSS koruması) |
-| `controllers/api_announcement_controller.py` | `ApiAnnouncementController` — JSON, kendi `/api/announcements` router'ı (tag: `ApiAnnouncement`). Miras yoktur |
-| `requirements.txt` | `python-multipart` eklendi (form verisi için) |
-
-Olmayan id için her iki controller da **404** döner. Router'lar `main.py` içinde `include_router` ile bağlanır.
-
-### Web endpoint'leri (`Announcement`)
-
-| Method | Endpoint | Açıklama |
-| :--- | :--- | :--- |
-| `GET` | `/announcements` | Liste + ekleme formu |
-| `POST` | `/announcements` | Oluştur → 303 `/announcements` |
-| `GET` | `/announcements/{id}` | Detay |
-| `GET` | `/announcements/{id}/edit` | Düzenleme formu |
-| `POST` | `/announcements/{id}/edit` | Güncelle → 303 `/announcements/{id}` |
-| `POST` | `/announcements/{id}/delete` | Sil → 303 `/announcements` |
-
-### API endpoint'leri (`ApiAnnouncement`)
-
-| Method | Endpoint | Açıklama |
-| :--- | :--- | :--- |
-| `GET` | `/api/announcements` | Tümünü listele |
-| `POST` | `/api/announcements` | Oluştur (201) |
-| `GET` | `/api/announcements/{id}` | Detay (404) |
-| `PUT` | `/api/announcements/{id}` | Tam güncelle |
-| `PATCH` | `/api/announcements/{id}` | Kısmi güncelle |
-| `DELETE` | `/api/announcements/{id}` | Sil |
-
-## Data Design
-
-Veritabanı tasarımı ayrı bir dokümanda tutulur: **[ddd.md](ddd.md)** (Data Design Documentation). Tasarım aşamasındadır, veritabanı henüz oluşturulmamıştır.
-
-| Tablo | Özet |
-| :--- | :--- |
-| `users` | `id`, `first_name`, `last_name`, `email` (unique), `graduation_year`, `department` |
+| `users` | `id`, `first_name`, `last_name`, `email` (unique, lowercase), `graduation_year`, `department` |
 | `announcements` | `id`, `title`, `content`, `author`, `created_at` |
+| `job_postings` | `id`, `title` (required, max 120 chars), `company` (required), `city` (optional), `employment_type`, `description` (optional), `application_url` (optional), `is_active`, `created_at`, `posted_by` (FK → `users.id`) |
+| `applications` | `id`, `job_posting_id` (FK → `job_postings.id`), `user_id` (FK → `users.id`), `status`, `cover_letter`, `applied_at` |
 
-Ayrıntılar (kısıtlar, indeksler, ER diyagramı, açık kararlar) için [ddd.md](ddd.md) dosyasına bakın.
+See [ddd.md](ddd.md) for full constraints, indexes, relationships, and the Mermaid ER diagram.
+
+---
 
 ## Environment Variables
 
-Gizli bilgiler `.env` dosyasında tutulur. `.env` **git tarafından yok sayılır** (`.gitignore`), şablon olarak [.env.example](.env.example) commit edilir.
+Secret configuration is stored in `.env` (ignored by Git via `.gitignore`), with [.env.example](.env.example) provided as a template:
 
 ```powershell
-Copy-Item .env.example .env   # sonra değerleri düzenleyin
+Copy-Item .env.example .env
 ```
 
-| Değişken | Açıklama |
+| Variable | Description |
 | :--- | :--- |
-| `POSTGRES_USER` | PostgreSQL kullanıcı adı |
-| `POSTGRES_PASSWORD` | PostgreSQL parolası |
-| `POSTGRES_DB` | Veritabanı adı |
+| `POSTGRES_USER` | PostgreSQL username |
+| `POSTGRES_PASSWORD` | PostgreSQL password |
+| `POSTGRES_DB` | Database name |
 
-`docker-compose.yml` bu değerleri `.env` dosyasından otomatik okur. Dosya yoksa compose içindeki varsayılanlar kullanılır.
+---
 
 ## Running the Project
 
+Start the web application and PostgreSQL database with Docker Compose:
 
-The project is designed to run with Docker Compose:
-
-```bash
-docker compose up
+```powershell
+docker compose up -d
+docker compose exec web alembic upgrade head
 ```
 
-The repository will be developed incrementally throughout the semester, with each week's progress reflected in the Git commit history.
+Optionally seed the database with sample data:
+
+```powershell
+docker compose exec web python -m database.seed --reset --seed 42
+```

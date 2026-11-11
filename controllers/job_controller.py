@@ -37,13 +37,35 @@ class JobController:
 
     @classmethod
     def create(
-        cls, title: str, company: str, location: str, description: str,
-        employment_type: str, posted_by: Optional[str],
+        cls,
+        title: str,
+        company: str,
+        city: Optional[str],
+        description: Optional[str],
+        application_url: Optional[str],
+        employment_type: str,
+        posted_by: Optional[str],
     ) -> RedirectResponse:
+        clean_title = title.strip()
+        clean_company = company.strip()
+        if not clean_title or len(clean_title) > 120:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="İlan başlığı zorunludur ve en fazla 120 karakter olabilir",
+            )
+        if not clean_company:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Şirket adı zorunludur",
+            )
         if employment_type not in EMPLOYMENT_TYPES:
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Geçersiz çalışma türü")
         JobPosting.create({
-            "title": title, "company": company, "location": location, "description": description,
+            "title": clean_title,
+            "company": clean_company,
+            "city": city.strip() if city and city.strip() else None,
+            "description": description.strip() if description and description.strip() else None,
+            "application_url": application_url.strip() if application_url and application_url.strip() else None,
             "employment_type": employment_type,
             "posted_by": int(posted_by) if posted_by else None,
         })
@@ -74,14 +96,15 @@ def list_jobs(request: Request):
 
 @router.post("/jobs", summary="İş ilanı oluştur", status_code=status.HTTP_303_SEE_OTHER)
 def create_job(
-    title: str = Form(...),
+    title: str = Form(..., max_length=120),
     company: str = Form(...),
-    location: str = Form(...),
-    description: str = Form(...),
+    city: Optional[str] = Form(None),
+    description: Optional[str] = Form(None),
+    application_url: Optional[str] = Form(None),
     employment_type: str = Form("full_time"),
     posted_by: Optional[str] = Form(None),
 ):
-    return JobController.create(title, company, location, description, employment_type, posted_by)
+    return JobController.create(title, company, city, description, application_url, employment_type, posted_by)
 
 
 @router.get("/jobs/{job_id}", summary="İlan detayı + başvuru formu", response_class=HTMLResponse)

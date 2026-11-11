@@ -1,7 +1,6 @@
 """
 SQLAlchemy table definitions. Source of truth: ddd.md (Data Design Documentation).
-These are schema definitions used by Alembic migrations; the CRUD model layer
-(models/) is still in-memory and is not changed here.
+Used by Alembic migrations (migrations/versions/) and the CRUD model layer (models/).
 """
 from sqlalchemy import (
     Boolean,
@@ -69,13 +68,14 @@ class JobPostingTable(Base):
     __tablename__ = "job_postings"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    title = Column(String(200), nullable=False)
+    title = Column(String(120), nullable=False)
     company = Column(String(150), nullable=False)
-    location = Column(String(150), nullable=False)
+    city = Column(String(150), nullable=True)
     employment_type = Column(
         String(30), nullable=False, server_default="full_time"
     )
-    description = Column(Text, nullable=False)
+    description = Column(Text, nullable=True)
+    application_url = Column(String(500), nullable=True)
     is_active = Column(Boolean, nullable=False, server_default=true())
     created_at = Column(DateTime, nullable=False, server_default=func.now())
     posted_by = Column(
