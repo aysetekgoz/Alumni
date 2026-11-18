@@ -3,8 +3,9 @@
 {% block content %}
 <div class="header-card">
     <div>
+        <div class="header-eyebrow">İstanbul Üniversitesi • Süreç Takibi</div>
         <h1>📨 Başvurular</h1>
-        <p>Başvuru ekleyin, durumunu güncelleyin, silin ve listeleyin.</p>
+        <p>İlanlara yapılan başvuruları görüntüleyin, aday değerlendirme durumunu güncelleyin ve yönetin.</p>
     </div>
     <div class="stats-badge">Toplam Başvuru: <span>{{ applications|length }}</span></div>
 </div>
@@ -58,7 +59,7 @@
                         <a class="item-title" href="/jobs/{{ a.job_posting_id }}">{{ job.title if job else 'İlan #' ~ a.job_posting_id }}</a>
                         <span class="id-badge">#{{ a.id }}</span>
                     </div>
-                    <div class="item-badge">{{ a.status }}</div>
+                    <div class="item-badge status-{{ a.status }}">{{ a.status }}</div>
                     <div class="item-info"><strong>Başvuran:</strong> {% if user %}{{ user.first_name }} {{ user.last_name }}{% else %}#{{ a.user_id }}{% endif %}</div>
                     {% if job %}<div class="item-info"><strong>Şirket:</strong> {{ job.company }}</div>{% endif %}
                     <div class="item-info">{{ a.cover_letter or '—' }}</div>

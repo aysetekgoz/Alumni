@@ -3,6 +3,7 @@
 {% block content %}
 <div class="header-card">
     <div>
+        <div class="header-eyebrow">İstanbul Üniversitesi • İlan Detayı</div>
         <h1>{{ job.title }}</h1>
         <p>{{ job.company }} • {{ job.city or 'Şehir belirtilmedi' }} • {{ job.employment_type|replace('_', ' ')|title }}</p>
     </div>
@@ -15,7 +16,7 @@
     {% if job.application_url %}
     <div class="item-info" style="margin-top:0.75rem;">
         🔗 <strong>Başvuru Linki:</strong>
-        <a href="{{ job.application_url }}" target="_blank" rel="noopener noreferrer" style="color: #38bdf8;">{{ job.application_url }} ↗</a>
+        <a href="{{ job.application_url }}" target="_blank" rel="noopener noreferrer" style="color: var(--color-obsidian); text-decoration: underline;">{{ job.application_url }} ↗</a>
     </div>
     {% endif %}
     <div class="item-info">🕒 Yayın tarihi: {{ job.created_at }}</div>
@@ -59,7 +60,7 @@
                         <span class="item-title">Kullanıcı #{{ a.user_id }}</span>
                         <span class="id-badge">#{{ a.id }}</span>
                     </div>
-                    <div class="item-badge">{{ a.status }}</div>
+                    <div class="item-badge status-{{ a.status }}">{{ a.status }}</div>
                     <div class="item-info">{{ a.cover_letter or '—' }}</div>
                     <div class="item-info">🕒 {{ a.applied_at }}</div>
                 </div>

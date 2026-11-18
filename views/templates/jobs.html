@@ -3,8 +3,9 @@
 {% block content %}
 <div class="header-card">
     <div>
+        <div class="header-eyebrow">İstanbul Üniversitesi • Kariyer Merkezi</div>
         <h1>💼 İş İlanları</h1>
-        <p>Mezunlar için iş ve staj ilanlarını görüntüleyin, yeni ilan yayınlayın ve başvuru yapın.</p>
+        <p>YBS mezunları ve öğrenciler için güncel iş ve staj ilanlarını inceleyin, yeni ilan yayınlayın ve başvurun.</p>
     </div>
     <div class="stats-badge">Toplam İlan: <span>{{ jobs|length }}</span></div>
 </div>
@@ -73,14 +74,14 @@
                         <span class="id-badge">#{{ j.id }}</span>
                     </div>
                     <div class="item-badge">{{ j.employment_type|replace('_', ' ')|title }}</div>
-                    {% if not j.is_active %}<div class="item-badge" style="background:rgba(239,68,68,0.2);color:#f87171;">Kapalı</div>{% endif %}
+                    {% if not j.is_active %}<div class="item-badge status-rejected">Kapalı</div>{% endif %}
                     <div class="item-info"><strong>Şirket:</strong> {{ j.company }}</div>
                     <div class="item-info"><strong>Şehir:</strong> {{ j.city or 'Belirtilmedi' }}</div>
                     {% if j.description %}
                     <div class="item-info">{{ j.description[:120] }}{% if j.description|length > 120 %}…{% endif %}</div>
                     {% endif %}
                     {% if j.application_url %}
-                    <div class="item-info">🔗 <a href="{{ j.application_url }}" target="_blank" rel="noopener noreferrer" style="color: #38bdf8;">Başvuru Linki ↗</a></div>
+                    <div class="item-info">🔗 <a href="{{ j.application_url }}" target="_blank" rel="noopener noreferrer" style="color: var(--color-obsidian); text-decoration: underline;">Başvuru Linki ↗</a></div>
                     {% endif %}
                 </div>
                 <div class="item-actions">

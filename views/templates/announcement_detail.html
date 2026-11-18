@@ -1,14 +1,16 @@
 {% extends "announcement_base.html" %}
 {% block title %}{{ announcement.title }}{% endblock %}
 {% block content %}
-<div class="form-card">
-    <div class="item-header">
-        <h2 style="margin:0;">{{ announcement.title }}</h2>
-        <span class="id-badge">#{{ announcement.id }}</span>
+<div class="header-card">
+    <div>
+        <div class="header-eyebrow">İstanbul Üniversitesi • Duyuru Detayı</div>
+        <h1>{{ announcement.title }}</h1>
+        <p>Yazar: {{ announcement.author }} • {{ announcement.created_at }}</p>
     </div>
-    <div class="item-badge">🕒 {{ announcement.created_at }}</div>
-    <div class="item-info"><strong>Yazar:</strong> {{ announcement.author }}</div>
-    <div class="detail-content">{{ announcement.content }}</div>
+    <div class="stats-badge">Duyuru <span>#{{ announcement.id }}</span></div>
+</div>
+<div class="form-card">
+    <div class="detail-content" style="margin-top: 0;">{{ announcement.content }}</div>
     <div class="item-actions" style="border-top:none;padding-top:0;margin-top:0;">
         <a class="btn-action btn-edit" href="/announcements/{{ announcement.id }}/edit">✏️ Düzenle</a>
         <form method="POST" action="/announcements/{{ announcement.id }}/delete" style="flex:1;display:flex;"

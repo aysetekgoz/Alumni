@@ -1,33 +1,88 @@
 <style>
     .sn-header {
-        display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;
-        padding: 1rem 2rem;
-        background: rgba(15, 23, 42, 0.7);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        padding: 0.9rem 2rem;
+        min-height: 68px;
+        background: rgba(255, 255, 255, 0.95);
         backdrop-filter: blur(12px);
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        position: sticky; top: 0; z-index: 50;
-        font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+        border-bottom: 1px solid #e2e8e4;
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        font-family: 'DM Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
     }
-    .sn-logo { display: flex; align-items: center; gap: 0.75rem; font-size: 1.2rem; font-weight: 700; color: #fff; text-decoration: none; }
-    .sn-logo-icon {
-        width: 36px; height: 36px; border-radius: 10px; font-size: 1.1rem;
-        background: linear-gradient(135deg, #6366f1, #38bdf8);
-        display: flex; align-items: center; justify-content: center;
+    .sn-logo {
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        font-size: 1.05rem;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+        color: #0f3d2e;
+        text-decoration: none;
     }
-    .sn-links { display: flex; gap: 0.35rem; align-items: center; flex-wrap: wrap; }
+    .sn-logo-dot {
+        width: 11px;
+        height: 11px;
+        border-radius: 10000px;
+        background: #eab308;
+        border: 2px solid #0f3d2e;
+        flex-shrink: 0;
+    }
+    .sn-links {
+        display: flex;
+        gap: 0.25rem;
+        align-items: center;
+        flex-wrap: wrap;
+    }
     .sn-links a {
-        padding: 0.45rem 0.9rem; border-radius: 8px; font-size: 0.875rem; font-weight: 600;
-        color: #94a3b8; text-decoration: none; transition: all 0.2s ease;
+        padding: 0.5rem 0.9rem;
+        border-radius: 10000px;
+        font-size: 14px;
+        font-weight: 500;
+        color: #3f4a44;
+        text-decoration: none;
+        transition: background 160ms ease, color 160ms ease;
     }
-    .sn-links a:hover { color: #fff; background: rgba(255, 255, 255, 0.06); }
-    .sn-links a.active { color: #fff; background: rgba(99, 102, 241, 0.25); }
-    .sn-links a.sn-docs { color: #fff; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.1); margin-left: 0.5rem; }
-    .sn-links a.sn-docs:hover { background: rgba(255, 255, 255, 0.18); }
+    .sn-links a:hover {
+        color: #0f3d2e;
+        background: #ecfdf5;
+    }
+    .sn-links a.active {
+        color: #0f3d2e;
+        background: #fef9c3;
+        font-weight: 600;
+    }
+    .sn-links a.sn-docs {
+        background: #0f3d2e;
+        color: #fef9c3;
+        border-radius: 10000px;
+        padding: 0.55rem 1.15rem;
+        font-size: 14px;
+        font-weight: 500;
+        margin-left: 0.5rem;
+        transition: transform 180ms cubic-bezier(0.16, 1, 0.3, 1), background 160ms ease;
+    }
+    .sn-links a.sn-docs:hover {
+        background: #14532d;
+        color: #ffffff;
+        transform: translateY(-1px);
+    }
+    @media (max-width: 768px) {
+        .sn-header { padding: 0.85rem 1rem; }
+    }
 </style>
 {% set path = request.url.path if request else '' %}
 <header class="sn-header">
-    <a href="/" class="sn-logo"><span class="sn-logo-icon">🎓</span><span>Alumni Tracking System</span></a>
-    <div class="sn-links">
+    <a href="/" class="sn-logo">
+        <span class="sn-logo-dot"></span>
+        <span>İÜ YBS Alumni</span>
+    </a>
+    <nav class="sn-links" aria-label="Ana Navigasyon">
         <a href="/" class="{{ 'active' if path == '/' }}">Ana Sayfa</a>
         <a href="/users" class="{{ 'active' if path.startswith('/users') }}">Mezunlar</a>
         <a href="/announcements" class="{{ 'active' if path.startswith('/announcements') }}">Duyurular</a>
@@ -35,6 +90,5 @@
         <a href="/applications" class="{{ 'active' if path.startswith('/applications') }}">Başvurular</a>
         <a href="/about" class="{{ 'active' if path.startswith('/about') }}">Hakkında</a>
         <a href="/api/swagger" target="_blank" class="sn-docs">Swagger UI ↗</a>
-    </div>
+    </nav>
 </header>
-

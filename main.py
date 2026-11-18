@@ -1,7 +1,9 @@
+import os
 import re
 from typing import Optional
 from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from sqlalchemy.exc import IntegrityError
 
@@ -85,6 +87,9 @@ app = FastAPI(
 app.add_middleware(NotFoundGuardianMiddleware)
 app.add_middleware(ServerErrorGuardianMiddleware)
 app.add_middleware(LoggerMiddleware)
+
+os.makedirs("static", exist_ok=True)
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 LANDING_PAGE_HTML = """<!DOCTYPE html>
 <html lang="tr">
@@ -888,12 +893,12 @@ def docs_redirect():
 
 @app.get("/", response_class=HTMLResponse)
 def read_root(request: Request):
-    return _with_shared_navbar(LANDING_PAGE_HTML, request)
+    return templates.TemplateResponse(request, "home.html")
 
 
 @app.get("/about", response_class=HTMLResponse)
 def read_about(request: Request):
-    return _with_shared_navbar(ABOUT_PAGE_HTML, request)
+    return templates.TemplateResponse(request, "about.html")
 
 
 @app.get("/hello")

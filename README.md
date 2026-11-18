@@ -2,6 +2,8 @@
 
 This project is an **Alumni Tracking System** developed for the Web Programming course at Istanbul University.
 
+> **Documentation:** [Data Design (`ddd.md`)](ddd.md) · [Brand Guidelines (`brand.md`)](brand.md) · [Design System (`design.md`)](design.md)
+
 ## Technology Stack
 
 * **Backend:** FastAPI (Python)
@@ -213,6 +215,18 @@ The relational database schema and validation rules are documented in **[ddd.md]
 | `applications` | `id`, `job_posting_id` (FK → `job_postings.id`), `user_id` (FK → `users.id`), `status`, `cover_letter`, `applied_at` |
 
 See [ddd.md](ddd.md) for full constraints, indexes, relationships, and the Mermaid ER diagram.
+
+---
+
+## Brand Guidelines ([brand.md](brand.md))
+
+The institutional brand identity for **İstanbul Üniversitesi — Yönetim Bilişim Sistemleri (İÜ YBS)**, including the *Bosphorus Night & Imperial Gold* color palette, tone of voice, and ready-to-use CSS variables, is documented in **[brand.md](brand.md)**.
+
+---
+
+## Design System ([design.md](design.md))
+
+The complete `awesome-design-md`-style specification — color & typography tokens (`Plus Jakarta Sans`, `Inter`, `JetBrains Mono`), spacing/radius rules, GPU-composited motion/animation tokens, component specs, and AI agent prompt guide — is documented in **[design.md](design.md)**.
 
 ---
 
