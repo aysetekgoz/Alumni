@@ -1,5 +1,17 @@
 {% extends "announcement_base.html" %}
 {% block title %}Duyuruyu Düzenle{% endblock %}
+{% block full_width_top %}
+<section class="page-hero">
+    <div class="page-hero-inner">
+        <div>
+            <div class="page-hero-chip">1453 • İstanbul Üniversitesi • Duyuru Düzenleme</div>
+            <h1>✏️ Duyuruyu Düzenle</h1>
+            <p>{{ announcement.title }}</p>
+        </div>
+        <div class="page-hero-badge">Duyuru <span>#{{ announcement.id }}</span></div>
+    </div>
+</section>
+{% endblock %}
 {% block content %}
 <div class="form-card">
     <h2>✏️ Duyuruyu Düzenle (#{{ announcement.id }})</h2>

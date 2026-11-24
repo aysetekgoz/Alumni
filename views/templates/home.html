@@ -2,21 +2,27 @@
 {% block title %}Ana Sayfa{% endblock %}
 {% block extra_styles %}
 <style>
+    @keyframes floatCue {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(5px); }
+    }
+
     /* Full-bleed Entrance Hero with Original Istanbul University Gate Background */
     .iu-entrance-hero {
         position: relative;
         width: 100%;
         min-height: 78vh;
         display: flex;
-        align-items: flex-end;
+        flex-direction: column;
+        justify-content: flex-end;
         overflow: hidden;
-        background-color: #0f3d2e;
+        background-color: var(--iu-emerald-dark);
         background-image:
-            linear-gradient(180deg, rgba(15, 61, 46, 0.38) 0%, rgba(15, 61, 46, 0.62) 48%, rgba(10, 36, 27, 0.90) 100%),
+            linear-gradient(180deg, rgba(0, 77, 52, 0.30) 0%, rgba(0, 104, 71, 0.56) 45%, rgba(0, 62, 41, 0.90) 100%),
             url('/static/images/iu-gate.jpg');
         background-size: cover;
         background-position: center 40%;
-        border-bottom: 3px solid #eab308;
+        border-bottom: 4px solid var(--iu-gold);
     }
     .iu-hero-inner {
         position: relative;
@@ -24,20 +30,20 @@
         max-width: 1200px;
         width: 100%;
         margin: 0 auto;
-        padding: 4rem 1.5rem 3.5rem;
+        padding: 4rem 1.5rem 2.75rem;
     }
     .iu-yellow-chip {
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        background: #fef9c3;
-        color: #713f12;
-        border: 1px solid #fde047;
+        background: var(--iu-gold);
+        color: #422006;
         font-size: 12px;
-        font-weight: 600;
-        padding: 5px 12px;
+        font-weight: 700;
+        padding: 6px 14px;
         border-radius: var(--radius-badges);
         margin-bottom: 20px;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
         animation: fadeSlideUp 520ms var(--ease-out-expo) both;
     }
     .iu-hero-grid {
@@ -48,14 +54,15 @@
     }
     .iu-entrance-hero h1 {
         font-size: clamp(38px, 5.2vw, 64px);
-        font-weight: 600;
-        line-height: 1.12;
+        font-weight: 700;
+        line-height: 1.1;
+        letter-spacing: -0.02em;
         color: #ffffff;
-        text-shadow: 0 2px 24px rgba(0, 0, 0, 0.35);
+        text-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
         animation: fadeSlideUp 580ms var(--ease-out-expo) 60ms both;
     }
     .iu-entrance-hero h1 span {
-        color: #fef08a;
+        color: var(--iu-gold);
     }
     .iu-hero-side {
         display: flex;
@@ -64,8 +71,8 @@
         animation: fadeSlideUp 600ms var(--ease-out-expo) 120ms both;
     }
     .iu-hero-side p {
-        font-size: 15px;
-        line-height: 1.5;
+        font-size: 15.5px;
+        line-height: 1.55;
         color: #ecfdf5;
     }
     .iu-hero-actions {
@@ -74,36 +81,50 @@
         gap: 10px;
     }
     .iu-btn-yellow {
-        padding: 12px 20px;
-        background: #eab308;
-        color: #0f3d2e;
-        border: 1px solid #facc15;
+        padding: 13px 22px;
+        background: var(--iu-gold);
+        color: var(--iu-emerald-dark);
+        border: 1px solid var(--iu-gold);
+        border-radius: var(--radius-buttons);
+        font-size: 14px;
+        font-weight: 700;
+        text-decoration: none;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.22);
+        transition: transform 180ms var(--ease-out-expo), background 160ms ease;
+    }
+    .iu-btn-yellow:hover {
+        background: #ffd44d;
+        transform: translateY(-2px);
+    }
+    .iu-btn-white-outline {
+        padding: 13px 22px;
+        background: rgba(255, 255, 255, 0.16);
+        backdrop-filter: blur(10px);
+        color: #ffffff;
+        border: 1px solid rgba(255, 255, 255, 0.45);
         border-radius: var(--radius-buttons);
         font-size: 14px;
         font-weight: 600;
         text-decoration: none;
-        transition: transform 180ms var(--ease-out-expo), background 160ms ease;
-    }
-    .iu-btn-yellow:hover {
-        background: #facc15;
-        transform: translateY(-1px);
-    }
-    .iu-btn-white-outline {
-        padding: 12px 20px;
-        background: rgba(255, 255, 255, 0.14);
-        backdrop-filter: blur(8px);
-        color: #ffffff;
-        border: 1px solid rgba(255, 255, 255, 0.38);
-        border-radius: var(--radius-buttons);
-        font-size: 14px;
-        font-weight: 500;
-        text-decoration: none;
         transition: background 160ms ease, transform 180ms var(--ease-out-expo);
     }
     .iu-btn-white-outline:hover {
-        background: rgba(255, 255, 255, 0.24);
-        transform: translateY(-1px);
+        background: rgba(255, 255, 255, 0.28);
+        transform: translateY(-2px);
     }
+    .iu-scroll-cue {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 2.25rem;
+        font-size: 13px;
+        font-weight: 600;
+        color: #d1fae5;
+        text-decoration: none;
+        transition: color 160ms ease;
+    }
+    .iu-scroll-cue:hover { color: var(--iu-gold); }
+    .iu-scroll-arrow { display: inline-block; animation: floatCue 1.8s ease-in-out infinite; }
 
     /* Scroll Reveal */
     .reveal {
@@ -113,49 +134,68 @@
     }
     .reveal.visible { opacity: 1; transform: translateY(0); }
 
-    /* Awesomic Stats Row with Subtle IU Yellow & Green Accents */
+    /* Lively Stats Row */
     .aw-stats-row {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
         gap: 16px;
-        margin-bottom: 64px;
+        margin-bottom: 56px;
     }
     .aw-stat-item {
         background: var(--surface-card);
         border: 1px solid var(--color-cloud);
+        border-top: 4px solid var(--iu-emerald);
         border-radius: var(--radius-cards);
-        padding: 28px;
+        padding: 24px 26px;
+        box-shadow: var(--shadow-card);
         display: flex;
-        align-items: baseline;
+        flex-direction: column;
         gap: 12px;
-        flex-wrap: wrap;
-        transition: border-color 180ms ease, background 180ms ease, transform 240ms var(--ease-out-expo);
+        transition: border-color 180ms ease, transform 240ms var(--ease-out-expo), box-shadow 240ms ease;
     }
     .aw-stat-item:hover {
-        border-color: #fde047;
-        background: #fefce8;
-        transform: translateY(-2px);
+        border-top-color: var(--iu-gold);
+        transform: translateY(-3px);
+        box-shadow: 0 14px 28px -10px rgba(0, 104, 71, 0.16);
+    }
+    .aw-stat-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .aw-stat-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        background: var(--iu-green-soft);
+        color: var(--iu-emerald);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
     }
     .aw-stat-num {
-        font-size: 48px;
-        font-weight: 600;
-        line-height: 1.1;
-        color: var(--color-obsidian);
+        font-size: 44px;
+        font-weight: 700;
+        line-height: 1.05;
+        color: var(--iu-emerald-dark);
         font-variant-numeric: tabular-nums;
     }
     .aw-stat-lbl {
         font-size: 14px;
-        font-weight: 500;
+        font-weight: 600;
         color: var(--color-steel);
     }
 
-    /* Dark IU Green Feature Block (Awesomic 36px radius) */
+    /* Vibrant Dark IU Emerald Feature Block */
     .aw-dark-block {
-        background: var(--surface-deep-dark);
+        background: linear-gradient(135deg, #004d34 0%, #006847 62%, #003e29 100%);
+        border: 1px solid rgba(255, 199, 44, 0.25);
         border-radius: var(--radius-cards);
         padding: 40px;
-        margin-bottom: 64px;
+        margin-bottom: 56px;
         color: var(--color-snow);
+        box-shadow: 0 20px 44px -16px rgba(0, 77, 52, 0.45);
     }
     .aw-dark-head {
         display: flex;
@@ -165,10 +205,20 @@
         gap: 16px;
         margin-bottom: 28px;
     }
+    .aw-dark-eyebrow {
+        display: inline-block;
+        font-size: 12px;
+        font-weight: 700;
+        color: #422006;
+        background: var(--iu-gold);
+        padding: 4px 10px;
+        border-radius: var(--radius-badges);
+        margin-bottom: 10px;
+    }
     .aw-dark-head h2 {
         font-size: 32px;
         font-weight: 700;
-        line-height: 1.28;
+        line-height: 1.25;
         color: var(--color-snow);
     }
     .aw-dark-head p {
@@ -187,23 +237,23 @@
         justify-content: space-between;
         gap: 16px;
         padding: 24px;
-        background: rgba(255, 255, 255, 0.06);
-        border: 1px solid rgba(254, 240, 138, 0.16);
-        border-radius: 28px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        border-radius: 26px;
         text-decoration: none;
         color: var(--color-snow);
         transition: transform 220ms var(--ease-out-expo), background 160ms ease, border-color 160ms ease;
     }
     .aw-dark-item:hover {
-        transform: translateY(-2px);
-        background: rgba(255, 255, 255, 0.11);
-        border-color: #fde047;
+        transform: translateY(-3px);
+        background: rgba(255, 255, 255, 0.14);
+        border-color: var(--iu-gold);
     }
     .aw-dark-item.wide { grid-column: 1 / -1; }
     .aw-dark-item-title {
         font-size: 20px;
-        font-weight: 500;
-        line-height: 1.4;
+        font-weight: 600;
+        line-height: 1.35;
         color: var(--color-snow);
         margin-bottom: 4px;
     }
@@ -214,24 +264,27 @@
     }
     .aw-dark-arrow {
         font-size: 20px;
-        color: #facc15;
+        font-weight: 700;
+        color: var(--iu-gold);
         flex-shrink: 0;
         transition: transform 180ms var(--ease-out-expo);
     }
     .aw-dark-item:hover .aw-dark-arrow { transform: translateX(4px); }
 
-    /* White Feed Cards (36px radius, 1px hairline border) */
+    /* White Feed Cards */
     .aw-feed-grid {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
         gap: 16px;
-        margin-bottom: 40px;
+        margin-bottom: 36px;
     }
     .aw-feed-card {
         background: var(--surface-card);
         border: 1px solid var(--color-cloud);
+        border-top: 3px solid var(--iu-gold);
         border-radius: var(--radius-cards);
         padding: 28px;
+        box-shadow: var(--shadow-card);
     }
     .aw-feed-head {
         display: flex;
@@ -241,21 +294,21 @@
     }
     .aw-feed-head h3 {
         font-size: 20px;
-        font-weight: 600;
-        color: var(--color-obsidian);
+        font-weight: 700;
+        color: var(--iu-emerald-dark);
     }
     .aw-tag-pill {
-        background: var(--color-green-soft);
+        background: var(--iu-green-soft);
         border: 1px solid #a7f3d0;
-        color: var(--color-obsidian);
+        color: var(--iu-emerald-dark);
         border-radius: var(--radius-badges);
-        padding: 4px 10px;
+        padding: 5px 11px;
         font-size: 13px;
-        font-weight: 500;
+        font-weight: 600;
         text-decoration: none;
-        transition: background 160ms ease;
+        transition: background 160ms ease, border-color 160ms ease;
     }
-    .aw-tag-pill:hover { background: #d1fae5; }
+    .aw-tag-pill:hover { background: var(--iu-gold-soft); border-color: var(--iu-gold); color: #713f12; }
 
     .aw-feed-list { display: flex; flex-direction: column; gap: 8px; }
     .aw-feed-row {
@@ -265,13 +318,14 @@
         gap: 12px;
         padding: 14px 16px;
         background: var(--surface-subtle-card);
+        border: 1px solid transparent;
         border-radius: 16px;
         text-decoration: none;
         color: inherit;
-        transition: background 160ms ease;
+        transition: background 160ms ease, border-color 160ms ease, transform 180ms ease;
     }
-    .aw-feed-row:hover { background: #fefce8; }
-    .aw-feed-row-title { font-size: 15px; font-weight: 500; color: var(--color-obsidian); }
+    .aw-feed-row:hover { background: var(--iu-gold-soft); border-color: #fde047; transform: translateX(3px); }
+    .aw-feed-row-title { font-size: 15px; font-weight: 600; color: var(--iu-emerald-dark); }
     .aw-feed-row-meta { font-size: 13px; color: var(--color-fog); margin-top: 2px; }
 
     .aw-dev-bar {
@@ -279,13 +333,15 @@
         border: 1px solid var(--color-cloud);
         border-radius: var(--radius-cards);
         padding: 18px 28px;
+        box-shadow: var(--shadow-card);
         display: flex;
         justify-content: space-between;
         align-items: center;
         flex-wrap: wrap;
         gap: 12px;
         font-size: 14px;
-        color: var(--color-steel);
+        font-weight: 600;
+        color: var(--iu-emerald-dark);
     }
 
     @media (max-width: 900px) {
@@ -297,7 +353,7 @@
     @media (max-width: 540px) {
         .iu-hero-inner { padding: 3rem 1rem 2.25rem; }
         .aw-stats-row { grid-template-columns: 1fr; }
-        .aw-dark-block { padding: 24px; border-radius: 28px; }
+        .aw-dark-block { padding: 24px; border-radius: 24px; }
     }
 </style>
 {% endblock %}
@@ -313,72 +369,91 @@
                     İstanbul Üniversitesi Yönetim Bilişim Sistemleri mezunlarının kariyer yolculuklarını, güncel iş ilanlarını ve duyuruları tek merkezden takip edin.
                 </p>
                 <div class="iu-hero-actions">
-                    <a href="/jobs" class="iu-btn-yellow">İş İlanlarını İncele</a>
-                    <a href="/users" class="iu-btn-white-outline">Mezun Rehberi</a>
+                    <a href="/jobs" class="iu-btn-yellow">💼 İş İlanlarını İncele</a>
+                    <a href="/users" class="iu-btn-white-outline">🎓 Mezun Rehberi</a>
                 </div>
             </div>
         </div>
+        <a href="#stats-section" class="iu-scroll-cue">
+            <span>İstatistikler ve Modülleri Keşfet</span>
+            <span class="iu-scroll-arrow">↓</span>
+        </a>
     </div>
 </section>
 {% endblock %}
 
 {% block content %}
-<section class="aw-stats-row reveal" aria-label="Platform İstatistikleri">
+<section id="stats-section" class="aw-stats-row reveal" aria-label="Platform İstatistikleri">
     <div class="aw-stat-item">
+        <div class="aw-stat-top">
+            <span class="aw-stat-lbl">Kayıtlı Mezun</span>
+            <span class="aw-stat-icon">🎓</span>
+        </div>
         <span class="aw-stat-num" id="stat-users">—</span>
-        <span class="aw-stat-lbl">Kayıtlı Mezun</span>
     </div>
     <div class="aw-stat-item">
+        <div class="aw-stat-top">
+            <span class="aw-stat-lbl">Aktif İş İlanı</span>
+            <span class="aw-stat-icon">💼</span>
+        </div>
         <span class="aw-stat-num" id="stat-jobs">—</span>
-        <span class="aw-stat-lbl">Aktif İş İlanı</span>
     </div>
     <div class="aw-stat-item">
+        <div class="aw-stat-top">
+            <span class="aw-stat-lbl">Yayınlanan Duyuru</span>
+            <span class="aw-stat-icon">📢</span>
+        </div>
         <span class="aw-stat-num" id="stat-announcements">—</span>
-        <span class="aw-stat-lbl">Yayınlanan Duyuru</span>
     </div>
     <div class="aw-stat-item">
+        <div class="aw-stat-top">
+            <span class="aw-stat-lbl">Toplam Başvuru</span>
+            <span class="aw-stat-icon">📨</span>
+        </div>
         <span class="aw-stat-num" id="stat-applications">—</span>
-        <span class="aw-stat-lbl">Toplam Başvuru</span>
     </div>
 </section>
 
 <section class="aw-dark-block reveal">
     <div class="aw-dark-head">
-        <h2>Platform Modülleri</h2>
+        <div>
+            <span class="aw-dark-eyebrow">İÜ YBS Ekosistemi</span>
+            <h2>Platform Modülleri</h2>
+        </div>
         <p>Üst menüdeki her sekme ile ilgili yönetim paneline doğrudan geçebilirsiniz.</p>
     </div>
     <div class="aw-dark-list">
         <a href="/users" class="aw-dark-item">
             <div>
-                <div class="aw-dark-item-title">Mezunlar &amp; Profiller</div>
+                <div class="aw-dark-item-title">🎓 Mezunlar &amp; Profiller</div>
                 <div class="aw-dark-item-desc">Kayıtlı mezunları arayın, yeni mezun ekleyin ve bilgilerini güncelleyin.</div>
             </div>
             <span class="aw-dark-arrow">→</span>
         </a>
         <a href="/jobs" class="aw-dark-item">
             <div>
-                <div class="aw-dark-item-title">İş &amp; Staj İlanları</div>
+                <div class="aw-dark-item-title">💼 İş &amp; Staj İlanları</div>
                 <div class="aw-dark-item-desc">Açık pozisyonları inceleyin, yeni ilan yayınlayın ve başvurun.</div>
             </div>
             <span class="aw-dark-arrow">→</span>
         </a>
         <a href="/applications" class="aw-dark-item">
             <div>
-                <div class="aw-dark-item-title">Başvuru Takibi</div>
+                <div class="aw-dark-item-title">📨 Başvuru Takibi</div>
                 <div class="aw-dark-item-desc">Aday başvurularını listeleyin ve değerlendirme durumlarını yönetin.</div>
             </div>
             <span class="aw-dark-arrow">→</span>
         </a>
         <a href="/announcements" class="aw-dark-item">
             <div>
-                <div class="aw-dark-item-title">Duyurular &amp; Etkinlikler</div>
+                <div class="aw-dark-item-title">📢 Duyurular &amp; Etkinlikler</div>
                 <div class="aw-dark-item-desc">Mezun buluşmaları, seminerler ve bölüm duyurularını paylaşın.</div>
             </div>
             <span class="aw-dark-arrow">→</span>
         </a>
         <a href="/about" class="aw-dark-item wide">
             <div>
-                <div class="aw-dark-item-title">Proje Hakkında &amp; Sistem Mimarisi</div>
+                <div class="aw-dark-item-title">🏛️ Proje Hakkında &amp; Sistem Mimarisi</div>
                 <div class="aw-dark-item-desc">FastAPI, PostgreSQL, Alembic ve Guardian Middleware yapısını inceleyin.</div>
             </div>
             <span class="aw-dark-arrow">→</span>
@@ -389,7 +464,7 @@
 <section class="aw-feed-grid reveal">
     <div class="aw-feed-card">
         <div class="aw-feed-head">
-            <h3>Son Duyurular</h3>
+            <h3>📢 Son Duyurular</h3>
             <a href="/announcements" class="aw-tag-pill">Tümünü Gör</a>
         </div>
         <div class="aw-feed-list" id="recent-announcements">
@@ -399,7 +474,7 @@
 
     <div class="aw-feed-card">
         <div class="aw-feed-head">
-            <h3>Güncel İş İlanları</h3>
+            <h3>💼 Güncel İş İlanları</h3>
             <a href="/jobs" class="aw-tag-pill">Tümünü Gör</a>
         </div>
         <div class="aw-feed-list" id="recent-jobs">
@@ -409,7 +484,7 @@
 </section>
 
 <section class="aw-dev-bar reveal">
-    <span>FastAPI &amp; PostgreSQL Servisi Aktif</span>
+    <span>🟢 FastAPI &amp; PostgreSQL Servisi Aktif</span>
     <div style="display: flex; gap: 8px; flex-wrap: wrap;">
         <a href="/api/swagger" target="_blank" class="aw-tag-pill">Swagger UI ↗</a>
         <a href="/api/health" target="_blank" class="aw-tag-pill">/api/health ↗</a>
@@ -457,6 +532,17 @@
         return [];
     }
 
+    function animateCount(el, target) {
+        const duration = 600;
+        const start = performance.now();
+        function step(now) {
+            const progress = Math.min((now - start) / duration, 1);
+            el.textContent = Math.round(target * (1 - Math.pow(1 - progress, 3)));
+            if (progress < 1) requestAnimationFrame(step);
+        }
+        requestAnimationFrame(step);
+    }
+
     async function loadDashboardData() {
         const [users, jobs, announcements, applications] = await Promise.all([
             fetchJsonSafe('/api/users'),
@@ -470,10 +556,10 @@
         const announcementList = extractItems(announcements);
         const applicationList = extractItems(applications);
 
-        if (users !== null) document.getElementById('stat-users').textContent = userList.length;
-        if (jobs !== null) document.getElementById('stat-jobs').textContent = jobList.length;
-        if (announcements !== null) document.getElementById('stat-announcements').textContent = announcementList.length;
-        if (applications !== null) document.getElementById('stat-applications').textContent = applicationList.length;
+        if (users !== null) animateCount(document.getElementById('stat-users'), userList.length);
+        if (jobs !== null) animateCount(document.getElementById('stat-jobs'), jobList.length);
+        if (announcements !== null) animateCount(document.getElementById('stat-announcements'), announcementList.length);
+        if (applications !== null) animateCount(document.getElementById('stat-applications'), applicationList.length);
 
         const annContainer = document.getElementById('recent-announcements');
         if (announcementList.length > 0) {

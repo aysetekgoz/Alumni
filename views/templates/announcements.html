@@ -1,14 +1,18 @@
 {% extends "announcement_base.html" %}
 {% block title %}Duyuru Yönetim Paneli{% endblock %}
-{% block content %}
-<div class="header-card">
-    <div>
-        <div class="header-eyebrow">İstanbul Üniversitesi • Kurumsal İletişim</div>
-        <h1>📢 Duyuru Yönetim Paneli</h1>
-        <p>Mezun buluşmaları, kariyer etkinlikleri ve bölüm duyurularını tek merkezden yönetin.</p>
+{% block full_width_top %}
+<section class="page-hero">
+    <div class="page-hero-inner">
+        <div>
+            <div class="page-hero-chip">1453 • İstanbul Üniversitesi • Kurumsal İletişim</div>
+            <h1>📢 Duyuru Yönetim Paneli</h1>
+            <p>Mezun buluşmaları, kariyer etkinlikleri ve bölüm duyurularını tek merkezden yönetin.</p>
+        </div>
+        <div class="page-hero-badge">Toplam Duyuru: <span>{{ announcements|length }}</span></div>
     </div>
-    <div class="stats-badge">Toplam Duyuru: <span>{{ announcements|length }}</span></div>
-</div>
+</section>
+{% endblock %}
+{% block content %}
 
 <div class="crud-grid">
     <div class="form-card">

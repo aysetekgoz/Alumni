@@ -1,14 +1,18 @@
 {% extends "announcement_base.html" %}
 {% block title %}İş İlanları{% endblock %}
-{% block content %}
-<div class="header-card">
-    <div>
-        <div class="header-eyebrow">İstanbul Üniversitesi • Kariyer Merkezi</div>
-        <h1>💼 İş İlanları</h1>
-        <p>YBS mezunları ve öğrenciler için güncel iş ve staj ilanlarını inceleyin, yeni ilan yayınlayın ve başvurun.</p>
+{% block full_width_top %}
+<section class="page-hero">
+    <div class="page-hero-inner">
+        <div>
+            <div class="page-hero-chip">1453 • İstanbul Üniversitesi • Kariyer Merkezi</div>
+            <h1>💼 İş İlanları</h1>
+            <p>YBS mezunları ve öğrenciler için güncel iş ve staj ilanlarını inceleyin, yeni ilan yayınlayın ve başvurun.</p>
+        </div>
+        <div class="page-hero-badge">Toplam İlan: <span>{{ jobs|length }}</span></div>
     </div>
-    <div class="stats-badge">Toplam İlan: <span>{{ jobs|length }}</span></div>
-</div>
+</section>
+{% endblock %}
+{% block content %}
 
 <div class="crud-grid">
     <div class="form-card">

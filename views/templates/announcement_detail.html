@@ -1,14 +1,18 @@
 {% extends "announcement_base.html" %}
 {% block title %}{{ announcement.title }}{% endblock %}
-{% block content %}
-<div class="header-card">
-    <div>
-        <div class="header-eyebrow">İstanbul Üniversitesi • Duyuru Detayı</div>
-        <h1>{{ announcement.title }}</h1>
-        <p>Yazar: {{ announcement.author }} • {{ announcement.created_at }}</p>
+{% block full_width_top %}
+<section class="page-hero">
+    <div class="page-hero-inner">
+        <div>
+            <div class="page-hero-chip">1453 • İstanbul Üniversitesi • Duyuru Detayı</div>
+            <h1>{{ announcement.title }}</h1>
+            <p>Yazar: {{ announcement.author }} • {{ announcement.created_at }}</p>
+        </div>
+        <div class="page-hero-badge">Duyuru <span>#{{ announcement.id }}</span></div>
     </div>
-    <div class="stats-badge">Duyuru <span>#{{ announcement.id }}</span></div>
-</div>
+</section>
+{% endblock %}
+{% block content %}
 <div class="form-card">
     <div class="detail-content" style="margin-top: 0;">{{ announcement.content }}</div>
     <div class="item-actions" style="border-top:none;padding-top:0;margin-top:0;">

@@ -1,16 +1,20 @@
 {% extends "announcement_base.html" %}
 {% block title %}Mezun Yönetim Paneli{% endblock %}
+{% block full_width_top %}
+<section class="page-hero">
+    <div class="page-hero-inner">
+        <div>
+            <div class="page-hero-chip">1453 • İstanbul Üniversitesi • Mezun Ağı</div>
+            <h1>🎓 Mezun Yönetim Paneli</h1>
+            <p>YBS ve üniversite mezunlarını görüntüleyin, yeni mezun kaydı oluşturun, bilgileri güncelleyin veya silin.</p>
+        </div>
+        <div class="page-hero-badge">
+            Toplam Mezun: <span id="userCount">{{ users|length if users else 0 }}</span>
+        </div>
+    </div>
+</section>
+{% endblock %}
 {% block content %}
-<div class="header-card">
-    <div>
-        <div class="header-eyebrow">İstanbul Üniversitesi • Mezun Ağı</div>
-        <h1>🎓 Mezun Yönetim Paneli</h1>
-        <p>YBS ve üniversite mezunlarını görüntüleyin, yeni mezun kaydı oluşturun, bilgileri güncelleyin veya silin.</p>
-    </div>
-    <div class="stats-badge">
-        Toplam Mezun: <span id="userCount">{{ users|length if users else 0 }}</span>
-    </div>
-</div>
 
 {% if message %}
 <div class="alert-success">

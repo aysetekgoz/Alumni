@@ -63,15 +63,19 @@
     }
 </style>
 {% endblock %}
-{% block content %}
-<div class="header-card">
-    <div>
-        <div class="header-eyebrow">İstanbul Üniversitesi • YBS / MIS</div>
-        <h1>Proje Hakkında</h1>
-        <p>İstanbul Üniversitesi Yönetim Bilişim Sistemleri vizyonuyla geliştirilen Mezun Takip ve Kariyer Ekosistemi.</p>
+{% block full_width_top %}
+<section class="page-hero">
+    <div class="page-hero-inner">
+        <div>
+            <div class="page-hero-chip">1453 • İstanbul Üniversitesi • YBS / MIS</div>
+            <h1>🏛️ Proje Hakkında</h1>
+            <p>İstanbul Üniversitesi Yönetim Bilişim Sistemleri vizyonuyla geliştirilen Mezun Takip ve Kariyer Ekosistemi.</p>
+        </div>
+        <div class="page-hero-badge">Mimari: <span>MVC + Guardian</span></div>
     </div>
-    <div class="stats-badge">Mimari: <span>MVC + Guardian</span></div>
-</div>
+</section>
+{% endblock %}
+{% block content %}
 
 <div class="form-card">
     <h2>🏛️ Kurumsal Vizyon &amp; Teknoloji Mimarisi</h2>

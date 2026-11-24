@@ -1,14 +1,18 @@
 {% extends "announcement_base.html" %}
 {% block title %}{{ job.title }}{% endblock %}
-{% block content %}
-<div class="header-card">
-    <div>
-        <div class="header-eyebrow">İstanbul Üniversitesi • İlan Detayı</div>
-        <h1>{{ job.title }}</h1>
-        <p>{{ job.company }} • {{ job.city or 'Şehir belirtilmedi' }} • {{ job.employment_type|replace('_', ' ')|title }}</p>
+{% block full_width_top %}
+<section class="page-hero">
+    <div class="page-hero-inner">
+        <div>
+            <div class="page-hero-chip">1453 • İstanbul Üniversitesi • İlan Detayı</div>
+            <h1>{{ job.title }}</h1>
+            <p>{{ job.company }} • {{ job.city or 'Şehir belirtilmedi' }} • {{ job.employment_type|replace('_', ' ')|title }}</p>
+        </div>
+        <div class="page-hero-badge">{% if job.is_active %}Başvuruya Açık{% else %}Kapalı{% endif %} • <span>#{{ job.id }}</span></div>
     </div>
-    <div class="stats-badge">{% if job.is_active %}Başvuruya Açık{% else %}Kapalı{% endif %} • #{{ job.id }}</div>
-</div>
+</section>
+{% endblock %}
+{% block content %}
 
 <div class="form-card" style="margin-bottom:2rem;">
     <h2>📄 İlan Açıklaması</h2>
