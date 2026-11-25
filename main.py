@@ -9,6 +9,7 @@ from sqlalchemy.exc import IntegrityError
 
 from views.announcement_view import templates
 from middlewares import (
+    AuthMiddleware,
     LoggerMiddleware,
     NotFoundGuardianMiddleware,
     ServerErrorGuardianMiddleware,
@@ -18,6 +19,9 @@ from controllers import (
     UserController,
     ApiUserController,
     user_router,
+    auth_router,
+    admin_router,
+    portal_router,
     api_user_router,
     announcement_router,
     job_router,
@@ -45,6 +49,18 @@ tags_metadata = [
     {
         "name": "User",
         "description": "UserController tarafından yönetilen /users rotaları.",
+    },
+    {
+        "name": "Auth",
+        "description": "Kayıt (/register), Giriş (/login) ve Çıkış (/logout) HTML rotaları.",
+    },
+    {
+        "name": "Admin",
+        "description": "Yalnızca admin rolüne açık yönetim paneli (/admin) rotaları.",
+    },
+    {
+        "name": "Portal",
+        "description": "Kullanıcıya özel sayfalar: /profile, /my-applications, /my-jobs.",
     },
     {
         "name": "ApiUser",
@@ -84,6 +100,7 @@ app = FastAPI(
     openapi_tags=tags_metadata,
 )
 
+app.add_middleware(AuthMiddleware)
 app.add_middleware(NotFoundGuardianMiddleware)
 app.add_middleware(ServerErrorGuardianMiddleware)
 app.add_middleware(LoggerMiddleware)
@@ -891,8 +908,13 @@ def docs_redirect():
     return RedirectResponse(url="/api/swagger")
 
 
-@app.get("/", response_class=HTMLResponse)
+@app.get("/", response_class=HTMLResponse, include_in_schema=False)
 def read_root(request: Request):
+    return templates.TemplateResponse(request, "register.html", {"form_data": {}})
+
+
+@app.get("/home", response_class=HTMLResponse)
+def read_home(request: Request):
     return templates.TemplateResponse(request, "home.html")
 
 
@@ -967,6 +989,9 @@ async def integrity_error_handler(request: Request, exc: IntegrityError):
 
 # Her iki controller'ı uygulamaya register et (tanıt)
 app.include_router(user_router)
+app.include_router(auth_router)
+app.include_router(admin_router)
+app.include_router(portal_router)
 app.include_router(api_user_router)
 app.include_router(announcement_router)
 app.include_router(api_announcement_router)

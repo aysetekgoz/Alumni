@@ -1,4 +1,7 @@
 from .user_controller import UserController, router as user_router
+from .auth_controller import router as auth_router
+from .admin_controller import router as admin_router
+from .portal_controller import router as portal_router
 from .api_user_controller import ApiUserController, router as api_user_router
 from .announcement_controller import AnnouncementController, router as announcement_router
 from .job_controller import JobController, router as job_router
@@ -22,6 +25,9 @@ __all__ = [
     "UserController",
     "ApiUserController",
     "user_router",
+    "auth_router",
+    "admin_router",
+    "portal_router",
     "api_user_router",
     "AnnouncementController",
     "ApiAnnouncementController",

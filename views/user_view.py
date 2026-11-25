@@ -75,3 +75,60 @@ class UserView:
         content = re.sub(r'\{%\s*if\s+users\s+and\s+users\|length\s*>\s*0\s*%\}(.*?)\{%\s*else\s*%\}(.*?)\{%\s*endif\s*%\}', r'\1' if users else r'\2', content, flags=re.DOTALL)
 
         return HTMLResponse(content=content, status_code=status_code)
+
+    @staticmethod
+    def render_register(
+        request: Request,
+        message: Optional[str] = None,
+        error: Optional[str] = None,
+        form_data: Optional[Dict[str, Any]] = None,
+        status_code: int = 200,
+    ) -> HTMLResponse:
+        """
+        Kayıt sayfası (/register) görünümünü render eder.
+        """
+        if HAS_JINJA and templates:
+            return templates.TemplateResponse(
+                request,
+                "register.html",
+                {
+                    "message": message,
+                    "error": error,
+                    "form_data": form_data or {},
+                },
+                status_code=status_code,
+            )
+
+        msg_html = f"<p style='color:green'>{message}</p>" if message else ""
+        err_html = f"<p style='color:red'>{error}</p>" if error else ""
+        return HTMLResponse(
+            content=f"<h1>Kayıt Ol</h1>{msg_html}{err_html}",
+            status_code=status_code,
+        )
+
+    @staticmethod
+    def render_login(
+        request: Request,
+        error: Optional[str] = None,
+        form_data: Optional[Dict[str, Any]] = None,
+        status_code: int = 200,
+    ) -> HTMLResponse:
+        """
+        Giriş sayfası (/login) görünümünü render eder.
+        """
+        if HAS_JINJA and templates:
+            return templates.TemplateResponse(
+                request,
+                "login.html",
+                {
+                    "error": error,
+                    "form_data": form_data or {},
+                },
+                status_code=status_code,
+            )
+
+        err_html = f"<p style='color:red'>{error}</p>" if error else ""
+        return HTMLResponse(
+            content=f"<h1>Giriş Yap</h1>{err_html}",
+            status_code=status_code,
+        )

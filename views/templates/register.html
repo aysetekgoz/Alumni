@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kayıt Ol &amp; Giriş — İÜ YBS Alumni</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300..700;1,9..40,300..700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --iu-emerald: #006847;
+            --iu-emerald-bright: #008457;
+            --iu-emerald-dark: #004d34;
+            --iu-gold: #ffc72c;
+            --iu-gold-soft: #fff8db;
+            --surface-canvas: #f4f7f5;
+            --color-graphite: #162620;
+            --color-steel: #4a6358;
+            --color-cloud: #dce6e1;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'DM Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #004d34 0%, #006847 55%, #003825 100%);
+            color: var(--color-graphite);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1rem;
+        }
+        .gate-shell {
+            width: 100%;
+            max-width: 680px;
+        }
+        .gate-brand {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.85rem;
+            margin-bottom: 1.5rem;
+            color: #ffffff;
+            text-align: center;
+        }
+        .gate-badge {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.12);
+            border: 2px solid var(--iu-gold);
+            color: var(--iu-gold);
+            font-weight: 700;
+            font-size: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .gate-brand h1 {
+            font-size: 1.45rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+        .gate-brand p {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+        .gate-card {
+            background: #ffffff;
+            border-radius: 24px;
+            padding: 2rem;
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .gate-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--iu-emerald-dark);
+            margin-bottom: 0.35rem;
+        }
+        .gate-subtitle {
+            font-size: 0.9rem;
+            color: var(--color-steel);
+            margin-bottom: 1.25rem;
+        }
+        .alert-info {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.65rem;
+            padding: 0.85rem 1rem;
+            border-radius: 12px;
+            background: var(--iu-gold-soft);
+            border: 1px solid #fde68a;
+            color: #92400e;
+            font-size: 0.85rem;
+            line-height: 1.45;
+            margin-bottom: 1.25rem;
+        }
+        .alert-error {
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+            padding: 0.9rem 1rem;
+            border-radius: 12px;
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #991b1b;
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-bottom: 1.25rem;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+        .form-group.full {
+            grid-column: 1 / -1;
+        }
+        label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--iu-emerald-dark);
+        }
+        input, select {
+            width: 100%;
+            padding: 0.72rem 0.9rem;
+            border: 1.5px solid var(--color-cloud);
+            border-radius: 12px;
+            font-family: inherit;
+            font-size: 0.95rem;
+            color: var(--color-graphite);
+            background: #f8fbf9;
+            transition: border-color 160ms ease, box-shadow 160ms ease;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--iu-emerald);
+            background: #ffffff;
+            box-shadow: 0 0 0 3px rgba(0, 104, 71, 0.14);
+        }
+        .field-hint {
+            font-size: 0.78rem;
+            color: var(--color-steel);
+        }
+        .btn-submit {
+            width: 100%;
+            margin-top: 1.25rem;
+            padding: 0.9rem 1.25rem;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #006847 0%, #008457 100%);
+            color: #ffffff;
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 160ms ease, box-shadow 160ms ease;
+        }
+        .btn-submit:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 24px rgba(0, 104, 71, 0.28);
+        }
+        .gate-footer {
+            margin-top: 1.15rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--color-cloud);
+            text-align: center;
+            font-size: 0.86rem;
+            color: var(--color-steel);
+        }
+        .gate-footer a {
+            color: var(--iu-emerald);
+            font-weight: 600;
+            text-decoration: none;
+        }
+        .gate-footer a:hover {
+            text-decoration: underline;
+        }
+        @media (max-width: 600px) {
+            .form-grid { grid-template-columns: 1fr; }
+            .gate-card { padding: 1.4rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="gate-shell">
+        <div class="gate-brand">
+            <div class="gate-badge">İÜ</div>
+            <div>
+                <h1>İÜ YBS Alumni Tracking System</h1>
+                <p>İstanbul Üniversitesi Mezun ve Akademik Ağ Giriş Kapısı</p>
+            </div>
+        </div>
+
+        <div class="gate-card">
+            <h2 class="gate-title">Sisteme Kayıt Ol ve Giriş Yap</h2>
+            <p class="gate-subtitle">Sisteme erişmek için kayıt formunu doldurun. Kayıt sonrası doğrudan sisteme yönlendirileceksiniz.</p>
+
+            {% if error %}
+            <div class="alert-error">
+                <span>⚠️</span>
+                <span>{{ error }}</span>
+            </div>
+            {% endif %}
+
+            <div class="alert-info">
+                <span>ℹ️</span>
+                <span>
+                    <strong>Hibrit E-posta Modeli (Önizleme):</strong> Okul (<code>@ogr.iu.edu.tr</code> / <code>@istanbul.edu.tr</code>) veya kişisel e-posta ile kayıt olabilirsiniz. Arka plandaki onay servis katmanı (<em>Service Layer</em>) şimdilik pasif olup kayıt sonrası doğrudan sisteme giriş yapılır.
+                </span>
+            </div>
+
+            <form method="POST" action="/register">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="first_name">Ad</label>
+                        <input type="text" id="first_name" name="first_name" required placeholder="Örn: Ayşe" value="{{ form_data.first_name if form_data else '' }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="last_name">Soyad</label>
+                        <input type="text" id="last_name" name="last_name" required placeholder="Örn: Yılmaz" value="{{ form_data.last_name if form_data else '' }}">
+                    </div>
+                    <div class="form-group full">
+                        <label for="email">E-Posta</label>
+                        <input type="email" id="email" name="email" required placeholder="Örn: ayse.yilmaz@ogr.iu.edu.tr veya ayse@gmail.com" value="{{ form_data.email if form_data else '' }}">
+                        <span class="field-hint">Mezuniyet sonrası erişim kaybı yaşamamak için kişisel e-posta da kullanabilirsiniz.</span>
+                    </div>
+                    <div class="form-group">
+                        <label for="role">Kullanıcı Tipi</label>
+                        <select id="role" name="role" required onchange="toggleGradYear()">
+                            <option value="alumni" {{ 'selected' if not form_data or form_data.role == 'alumni' }}>Mezun (Alumni)</option>
+                            <option value="student" {{ 'selected' if form_data and form_data.role == 'student' }}>Öğrenci (Student)</option>
+                            <option value="academic" {{ 'selected' if form_data and form_data.role == 'academic' }}>Akademisyen (Academic)</option>
+                            <option value="staff" {{ 'selected' if form_data and form_data.role == 'staff' }}>Çalışan (Staff)</option>
+                            <option value="admin" {{ 'selected' if form_data and form_data.role == 'admin' }}>Yönetici (Admin)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="graduation_year" id="grad_year_label">Mezuniyet Yılı (veya Beklenen)</label>
+                        <input type="number" id="graduation_year" name="graduation_year" min="1900" max="2100" required value="{{ form_data.graduation_year if form_data else 2026 }}">
+                    </div>
+                    <div class="form-group full">
+                        <label for="department">Bölüm / Birim</label>
+                        <input type="text" id="department" name="department" required placeholder="Örn: Yönetim Bilişim Sistemleri" value="{{ form_data.department if form_data else '' }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Şifre</label>
+                        <input type="password" id="password" name="password" required minlength="6" placeholder="En az 6 karakter">
+                    </div>
+                    <div class="form-group">
+                        <label for="password_confirm">Şifre Tekrar</label>
+                        <input type="password" id="password_confirm" name="password_confirm" required minlength="6" placeholder="Şifrenizi tekrar girin">
+                    </div>
+                </div>
+                <button type="submit" class="btn-submit">Kayıt Ol ve Sisteme Gir →</button>
+            </form>
+
+            <div class="gate-footer">
+                Zaten hesabınız var mı? <a href="/login">Giriş Yap →</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleGradYear() {
+            const role = document.getElementById("role").value;
+            const gradInput = document.getElementById("graduation_year");
+            const gradLabel = document.getElementById("grad_year_label");
+            const isRequired = (role === "alumni" || role === "student");
+            gradInput.required = isRequired;
+            gradLabel.textContent = isRequired
+                ? "Mezuniyet Yılı (veya Beklenen)"
+                : "Mezuniyet Yılı (Opsiyonel)";
+        }
+        toggleGradYear();
+    </script>
+</body>
+</html>

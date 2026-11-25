@@ -1,3 +1,6 @@
+import hashlib
+import hmac
+import secrets
 from typing import Any, Dict, List, Optional, Union
 from pydantic import BaseModel
 from sqlalchemy import func
@@ -11,8 +14,10 @@ class UserCreate(BaseModel):
     first_name: str
     last_name: str
     email: str
-    graduation_year: int
+    graduation_year: Optional[int] = None
     department: str
+    role: str = "alumni"
+    is_active: bool = True
 
 
 class UserUpdate(BaseModel):
@@ -20,8 +25,10 @@ class UserUpdate(BaseModel):
     first_name: str
     last_name: str
     email: str
-    graduation_year: int
+    graduation_year: Optional[int] = None
     department: str
+    role: str = "alumni"
+    is_active: bool = True
 
 
 class UserPatch(BaseModel):
@@ -31,6 +38,8 @@ class UserPatch(BaseModel):
     email: Optional[str] = None
     graduation_year: Optional[int] = None
     department: Optional[str] = None
+    role: Optional[str] = None
+    is_active: Optional[bool] = None
 
 
 def _row_to_dict(row: UserTable) -> Dict[str, Any]:
@@ -39,6 +48,8 @@ def _row_to_dict(row: UserTable) -> Dict[str, Any]:
         "first_name": row.first_name,
         "last_name": row.last_name,
         "email": row.email,
+        "role": row.role,
+        "is_active": row.is_active,
         "graduation_year": row.graduation_year,
         "department": row.department,
     }
@@ -49,6 +60,22 @@ def _normalize_email(payload: Dict[str, Any]) -> Dict[str, Any]:
     if isinstance(payload.get("email"), str):
         payload["email"] = payload["email"].strip().lower()
     return payload
+
+
+def hash_password(password: str) -> str:
+    """Hashes a plaintext password using PBKDF2-HMAC-SHA256 with a random salt."""
+    salt = secrets.token_hex(16)
+    dk = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt.encode("utf-8"), 100_000)
+    return f"{salt}${dk.hex()}"
+
+
+def verify_password(password: str, stored_hash: Optional[str]) -> bool:
+    """Verifies a plaintext password against a stored PBKDF2-HMAC-SHA256 hash."""
+    if not stored_hash or "$" not in stored_hash:
+        return False
+    salt, expected_hex = stored_hash.split("$", 1)
+    dk = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt.encode("utf-8"), 100_000)
+    return hmac.compare_digest(dk.hex(), expected_hex)
 
 
 class User:
@@ -129,16 +156,37 @@ class User:
             raise ValueError("Unsupported data format for User.create")
 
         payload = _normalize_email(payload)
+        password_hash = payload.get("password_hash")
+        if not password_hash and payload.get("password"):
+            password_hash = hash_password(payload["password"])
+
         with session_scope() as session:
             row = UserTable(
                 first_name=payload.get("first_name"),
                 last_name=payload.get("last_name"),
                 email=payload.get("email"),
+                password_hash=password_hash,
+                role=payload.get("role") or "alumni",
+                is_active=payload.get("is_active", True),
                 graduation_year=payload.get("graduation_year"),
                 department=payload.get("department"),
             )
             session.add(row)
             session.flush()  # id'yi almak için
+            return _row_to_dict(row)
+
+    @classmethod
+    def authenticate(cls, email: str, password: str) -> Optional[Dict[str, Any]]:
+        """Verifies user credentials by email and password_hash."""
+        normalized = email.strip().lower()
+        with session_scope() as session:
+            row = (
+                session.query(UserTable)
+                .filter(func.lower(UserTable.email) == normalized)
+                .first()
+            )
+            if not row or not row.is_active or not verify_password(password, row.password_hash):
+                return None
             return _row_to_dict(row)
 
     @classmethod
@@ -189,7 +237,7 @@ class User:
             row = session.get(UserTable, user_id)
             if row is None:
                 return None
-            for key in ("first_name", "last_name", "email", "graduation_year", "department"):
+            for key in ("first_name", "last_name", "email", "role", "is_active", "graduation_year", "department"):
                 setattr(row, key, payload.get(key, getattr(row, key)))
             session.flush()
             return _row_to_dict(row)
@@ -208,7 +256,7 @@ class User:
             raise ValueError("Unsupported data format for User.patch")
 
         payload = _normalize_email(payload)
-        allowed = ("first_name", "last_name", "email", "graduation_year", "department")
+        allowed = ("first_name", "last_name", "email", "role", "is_active", "graduation_year", "department")
         with session_scope() as session:
             row = session.get(UserTable, user_id)
             if row is None:

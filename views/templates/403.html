@@ -1,0 +1,18 @@
+{% extends "announcement_base.html" %}
+{% block title %}403 Yetkisiz Erişim — İÜ YBS Alumni{% endblock %}
+{% block content %}
+<div style="max-width: 620px; margin: 2.5rem auto; background: #ffffff; border: 1px solid #fecaca; border-radius: 24px; padding: 2.25rem; text-align: center; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);">
+    <div style="font-size: 2.5rem; margin-bottom: 0.75rem;">🚫</div>
+    <h1 style="font-size: 1.4rem; color: #991b1b; margin-bottom: 0.6rem;">Yetkisiz Erişim (403)</h1>
+    <p style="color: #4a6358; font-size: 0.96rem; margin-bottom: 1.25rem;">{{ detail }}</p>
+    {% if current_user %}
+    <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1.5rem;">
+        Şu anki aktif oturum: <strong>{{ current_user.email }}</strong> (Rol: <strong>{{ current_user.role }}</strong>)
+    </p>
+    {% endif %}
+    <div style="display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap;">
+        <a href="/home" class="btn-submit" style="text-decoration:none; width:auto; padding:0.7rem 1.3rem;">Ana Sayfaya Dön</a>
+        <a href="/logout" class="btn-action btn-delete" style="text-decoration:none; padding:0.7rem 1.3rem;">Çıkış Yap ve Başka Hesaba Gir</a>
+    </div>
+</div>
+{% endblock %}

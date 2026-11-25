@@ -103,6 +103,40 @@ The **View** layer formats and presents data to clients and users:
 
 ---
 
+## Authentication & Role-Based Access Control (Auth & RBAC)
+
+The application implements cookie-based session authentication, PBKDF2-HMAC-SHA256 password hashing, middleware route protection, and a 5-role RBAC model (`admin`, `staff`, `academic`, `alumni`, `student`):
+
+### 1. Registration, Login & Logout (`controllers/auth_controller.py`)
+* **Gateway Entry (`/` & `/register`):** Opening the site root `/` renders the standalone registration gateway (`register.html`) without the internal system navbar. Passwords are salted and hashed via `PBKDF2-HMAC-SHA256` (`hash_password` in `models/user.py`).
+* **Login (`/login`):** Verifies credentials via `User.authenticate(email, password)` (checking `is_active` and `password_hash`), sets an `httponly` `alumni_user_id` cookie, and redirects (`303`) to `/home`.
+* **Logout (`/logout`):** Clears the `alumni_user_id` cookie and redirects to `/login`.
+* **Future Service Layer (Deferred):** Hybrid university email domain verification (`@ogr.iu.edu.tr` / `@istanbul.edu.tr` auto-activation vs. personal email approval queue) is documented in `ddd.md` and reserved for a future `services/auth_service.py` layer.
+
+### 2. Auth Middleware (`middlewares/auth_middleware.py`)
+* Resolves `request.state.current_user` from the `alumni_user_id` cookie on every incoming request.
+* **Public paths:** `/`, `/register`, `/login`, `/logout`, `/404`, `/api/health`, `/api/swagger`, `/docs`, `/openapi.json`, `/redoc`, and `/static/*`.
+* **Protected paths:** Unauthenticated browser requests redirect (`302`) to `/login`; unauthenticated `/api/*` requests receive `401 Unauthorized` JSON.
+
+### 3. Roles, Dynamic Navigation & User-Specific Pages
+The shared navbar (`views/templates/_navbar.html`) dynamically adapts menu items to `request.state.current_user.role`:
+
+| Role | Access Highlights |
+| :--- | :--- |
+| **`admin`** | Full access including **Admin Panel** (`/admin`), **Users** (`/users`), **Swagger UI**, **My Jobs** (`/my-jobs`), **My Applications** (`/my-applications`), and **Profile** (`/profile`) |
+| **`staff`** | Announcements, Jobs, Applications, **My Jobs** (`/my-jobs`), **Swagger UI**, and **Profile** (`/profile`) |
+| **`academic`** | Announcements, Jobs, Applications, **My Jobs** (`/my-jobs`), and **Profile** (`/profile`) |
+| **`alumni`** | Announcements, Jobs, Applications, **My Jobs** (`/my-jobs`), **My Applications** (`/my-applications`), and **Profile** (`/profile`) |
+| **`student`** | Announcements, Jobs, Applications, **My Applications** (`/my-applications`), and **Profile** (`/profile`) *(blocked from `/my-jobs` and `/admin` with `403.html`)* |
+
+* **Admin Panel (`controllers/admin_controller.py` -> `/admin`):** Restricted to `role == 'admin'`. Allows creating users with any role, updating user `role` / `is_active`, toggling/deleting job postings, deleting announcements, and updating/deleting applications.
+* **User-Specific Portal (`controllers/portal_controller.py`):**
+  * `/profile`: View and update own profile fields (`role` and `is_active` are read-only).
+  * `/my-applications`: View and withdraw only the user's own job applications.
+  * `/my-jobs`: Create/toggle/delete the user's own job postings and review/update statuses of applications submitted to those postings.
+
+---
+
 ## Middleware & Error Logging (`middlewares/` & `logs/error.logs`)
 
 | Middleware / Module | File | Description |
@@ -142,14 +176,18 @@ Alumni/
 ├── controllers/                             # Controller layer: HTML & REST API request handling
 │   ├── __init__.py
 │   ├── user_controller.py                   # /users (HTML CRUD)
+│   ├── auth_controller.py                   # /register, /login, /logout
+│   ├── admin_controller.py                  # /admin (Admin-only management panel)
+│   ├── portal_controller.py                 # /profile, /my-applications, /my-jobs
 │   ├── api_user_controller.py               # /api/users (JSON REST API)
 │   ├── announcement_controller.py           # /announcements (HTML CRUD)
 │   ├── api_announcement_controller.py       # /api/announcements (JSON REST API)
 │   ├── job_controller.py                    # /jobs & /applications (HTML CRUD)
 │   ├── api_job_posting_controller.py        # /api/job-postings & nested user routes
 │   └── api_application_controller.py        # /api/applications & nested routes
-├── middlewares/                             # Middleware layer: Logging & Error Guardians
+├── middlewares/                             # Middleware layer: Auth, Logging & Error Guardians
 │   ├── __init__.py
+│   ├── auth_middleware.py                   # Cookie session resolution & route protection
 │   ├── logger_middleware.py                 # Terminal request logger (time method route status ms)
 │   ├── not_found_guardian_middleware.py     # 404 Guardian (reason + redirect to /404)
 │   ├── server_error_guardian_middleware.py  # 5xx Guardian (catches 500s & exceptions)
@@ -166,13 +204,15 @@ Alumni/
 │   ├── tables.py
 │   ├── factories.py
 │   └── seed.py
-├── migrations/                              # Alembic schema migrations (0001 to 0004)
+├── migrations/                              # Alembic schema migrations (0001 to 0006)
 │   ├── env.py
 │   └── versions/
 │       ├── 0001_initial_schema.py
 │       ├── 0002_create_job_postings.py
 │       ├── 0003_create_applications.py
-│       └── 0004_update_job_postings_rules.py
+│       ├── 0004_update_job_postings_rules.py
+│       ├── 0005_add_user_password_hash.py
+│       └── 0006_add_user_role_and_is_active.py
 ├── views/                                   # View layer: View classes & Jinja2 HTML templates
 │   ├── __init__.py
 │   ├── user_view.py
@@ -188,6 +228,13 @@ Alumni/
 │       ├── jobs.html
 │       ├── job_detail.html
 │       ├── applications.html
+│       ├── register.html
+│       ├── login.html
+│       ├── admin.html
+│       ├── profile.html
+│       ├── my_applications.html
+│       ├── my_jobs.html
+│       ├── 403.html
 │       ├── 404.html
 │       └── 500.html
 ├── logs/
@@ -209,7 +256,7 @@ The relational database schema and validation rules are documented in **[ddd.md]
 
 | Table | Summary |
 | :--- | :--- |
-| `users` | `id`, `first_name`, `last_name`, `email` (unique, lowercase), `graduation_year`, `department` |
+| `users` | `id`, `first_name`, `last_name`, `email` (unique, lowercase), `password_hash`, `role`, `is_active`, `graduation_year` (optional for `admin`/`staff`/`academic`), `department` |
 | `announcements` | `id`, `title`, `content`, `author`, `created_at` |
 | `job_postings` | `id`, `title` (required, max 120 chars), `company` (required), `city` (optional), `employment_type`, `description` (optional), `application_url` (optional), `is_active`, `created_at`, `posted_by` (FK → `users.id`) |
 | `applications` | `id`, `job_posting_id` (FK → `job_postings.id`), `user_id` (FK → `users.id`), `status`, `cover_letter`, `applied_at` |

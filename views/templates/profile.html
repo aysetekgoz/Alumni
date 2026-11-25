@@ -1,0 +1,74 @@
+{% extends "announcement_base.html" %}
+{% block title %}Profilim — İÜ YBS Alumni{% endblock %}
+{% block full_width_top %}
+<section class="page-hero">
+    <div class="page-hero-inner">
+        <div>
+            <div class="page-hero-chip">1453 • Kişisel Hesap • {{ current_user.role|upper }}</div>
+            <h1>👤 Profilim</h1>
+            <p>Kişisel bilgilerinizi görüntüleyin ve güncelleyin. Rol ve hesap durumu yalnızca yönetici tarafından değiştirilebilir.</p>
+        </div>
+        <div class="page-hero-badge">
+            Rol: <span>{{ current_user.role }}</span>
+        </div>
+    </div>
+</section>
+{% endblock %}
+{% block content %}
+<style>
+    .profile-wrap { max-width: 720px; margin: 0 auto; }
+    .alert-error {
+        display: flex; align-items: center; gap: 0.75rem;
+        padding: 1rem 1.25rem; border-radius: 12px;
+        background: #fef2f2; border: 1px solid #fecaca;
+        color: #991b1b; font-weight: 500; margin-bottom: 1.25rem;
+    }
+</style>
+<div class="profile-wrap">
+    {% if message %}
+    <div class="alert-success"><span>✅</span><span>{{ message }}</span></div>
+    {% endif %}
+    {% if error %}
+    <div class="alert-error"><span>⚠️</span><span>{{ error }}</span></div>
+    {% endif %}
+
+    <div class="form-card">
+        <h2>✏️ Profil Bilgilerim</h2>
+        <form method="POST" action="/profile">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="first_name">Ad</label>
+                    <input type="text" id="first_name" name="first_name" required value="{{ current_user.first_name }}">
+                </div>
+                <div class="form-group">
+                    <label for="last_name">Soyad</label>
+                    <input type="text" id="last_name" name="last_name" required value="{{ current_user.last_name }}">
+                </div>
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label for="email">E-Posta</label>
+                    <input type="email" id="email" name="email" required value="{{ current_user.email }}">
+                </div>
+                <div class="form-group">
+                    <label for="department">Bölüm / Birim</label>
+                    <input type="text" id="department" name="department" required value="{{ current_user.department }}">
+                </div>
+                <div class="form-group">
+                    <label for="graduation_year">Mezuniyet Yılı {% if current_user.role not in ('student', 'alumni') %}(Opsiyonel){% endif %}</label>
+                    <input type="number" id="graduation_year" name="graduation_year" min="1900" max="2100"
+                           {% if current_user.role in ('student', 'alumni') %}required{% endif %}
+                           value="{{ current_user.graduation_year if current_user.graduation_year is not none else '' }}">
+                </div>
+                <div class="form-group">
+                    <label>Sistem Rolü (Salt Okunur)</label>
+                    <input type="text" value="{{ current_user.role }}" disabled>
+                </div>
+                <div class="form-group">
+                    <label>Hesap Durumu</label>
+                    <input type="text" value="{{ 'Aktif' if current_user.is_active else 'Pasif' }}" disabled>
+                </div>
+            </div>
+            <button type="submit" class="btn-submit">Değişiklikleri Kaydet</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

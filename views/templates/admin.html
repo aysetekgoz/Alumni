@@ -1,0 +1,352 @@
+{% extends "announcement_base.html" %}
+{% block title %}Admin Yönetim Paneli{% endblock %}
+{% block full_width_top %}
+<section class="page-hero">
+    <div class="page-hero-inner">
+        <div>
+            <div class="page-hero-chip">1453 • İstanbul Üniversitesi • Sistem Yönetimi</div>
+            <h1>🛡️ Admin Yönetim Paneli</h1>
+            <p>Hoş geldiniz, {{ current_user.first_name }} {{ current_user.last_name }} ({{ current_user.email }}). Kullanıcı rollerini, iş ilanlarını, duyuruları ve başvuruları buradan yönetebilirsiniz.</p>
+        </div>
+        <div class="page-hero-badge">
+            Rol: <span>ADMIN</span>
+        </div>
+    </div>
+</section>
+{% endblock %}
+{% block content %}
+<style>
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.75rem;
+    }
+    .stat-card {
+        background: #ffffff;
+        border: 1px solid #dce6e1;
+        border-radius: 18px;
+        padding: 1.15rem 1.25rem;
+        box-shadow: 0 4px 16px -8px rgba(0, 77, 52, 0.08);
+    }
+    .stat-label {
+        font-size: 0.82rem;
+        color: #4a6358;
+        font-weight: 600;
+        margin-bottom: 0.35rem;
+    }
+    .stat-value {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #004d34;
+    }
+    .admin-section {
+        background: #ffffff;
+        border: 1px solid #dce6e1;
+        border-radius: 20px;
+        padding: 1.5rem;
+        margin-bottom: 1.75rem;
+        box-shadow: 0 4px 20px -8px rgba(0, 77, 52, 0.08);
+    }
+    .admin-section h2 {
+        font-size: 1.15rem;
+        color: #004d34;
+        margin-bottom: 1rem;
+    }
+    .table-wrap {
+        overflow-x: auto;
+    }
+    .admin-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.88rem;
+    }
+    .admin-table th, .admin-table td {
+        text-align: left;
+        padding: 0.7rem 0.65rem;
+        border-bottom: 1px solid #e6efea;
+        vertical-align: middle;
+    }
+    .admin-table th {
+        font-weight: 700;
+        color: #004d34;
+        background: #f4f7f5;
+    }
+    .inline-form {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        flex-wrap: wrap;
+    }
+    .inline-form select {
+        padding: 0.38rem 0.55rem;
+        border-radius: 8px;
+        border: 1px solid #bfd2c9;
+        font-size: 0.84rem;
+        background: #f8fbf9;
+    }
+    .btn-sm {
+        padding: 0.4rem 0.75rem;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.82rem;
+        font-weight: 600;
+        cursor: pointer;
+    }
+    .btn-save {
+        background: #006847;
+        color: #ffffff;
+    }
+    .btn-save:hover { background: #004d34; }
+    .btn-toggle {
+        background: #fff8db;
+        color: #92400e;
+        border: 1px solid #fde68a;
+    }
+    .btn-del {
+        background: #fef2f2;
+        color: #991b1b;
+        border: 1px solid #fecaca;
+    }
+    .btn-del:hover { background: #fee2e2; }
+    .pill {
+        display: inline-block;
+        padding: 0.22rem 0.6rem;
+        border-radius: 999px;
+        font-size: 0.76rem;
+        font-weight: 700;
+    }
+    .pill-on { background: #e6f4ef; color: #006847; }
+    .pill-off { background: #fef2f2; color: #991b1b; }
+</style>
+
+{% if message %}
+<div class="alert-success">
+    <span>✅</span>
+    <span>{{ message }}</span>
+</div>
+{% endif %}
+
+<div class="stats-row">
+    <div class="stat-card">
+        <div class="stat-label">Toplam Kullanıcı</div>
+        <div class="stat-value">{{ users|length }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">İş İlanları</div>
+        <div class="stat-value">{{ jobs|length }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Duyurular</div>
+        <div class="stat-value">{{ announcements|length }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Başvurular</div>
+        <div class="stat-value">{{ applications|length }}</div>
+    </div>
+</div>
+
+<div class="admin-section">
+    <h2>➕ Yeni Kullanıcı Ekle (Herhangi Bir Rol ile)</h2>
+    <form method="POST" action="/admin/users/create">
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="first_name">Ad</label>
+                <input type="text" id="first_name" name="first_name" required>
+            </div>
+            <div class="form-group">
+                <label for="last_name">Soyad</label>
+                <input type="text" id="last_name" name="last_name" required>
+            </div>
+            <div class="form-group">
+                <label for="email">E-Posta</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            <div class="form-group">
+                <label for="role">Rol</label>
+                <select id="role" name="role" required>
+                    {% for r in roles %}
+                    <option value="{{ r }}">{{ r }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="department">Bölüm / Birim</label>
+                <input type="text" id="department" name="department" required value="Yönetim Bilişim Sistemleri">
+            </div>
+            <div class="form-group">
+                <label for="graduation_year">Mezuniyet Yılı (Opsiyonel)</label>
+                <input type="number" id="graduation_year" name="graduation_year" min="1900" max="2100">
+            </div>
+            <div class="form-group">
+                <label for="password">Şifre</label>
+                <input type="password" id="password" name="password" required minlength="6">
+            </div>
+        </div>
+        <button type="submit" class="btn-submit" style="margin-top: 0.75rem;">Kullanıcı Oluştur</button>
+    </form>
+</div>
+
+<div class="admin-section">
+    <h2>👥 Kullanıcı &amp; Rol Yönetimi</h2>
+    <div class="table-wrap">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Ad Soyad</th>
+                    <th>E-Posta</th>
+                    <th>Bölüm</th>
+                    <th>Rol &amp; Durum Güncelle</th>
+                    <th>Sil</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in users %}
+                <tr>
+                    <td>#{{ u.id }}</td>
+                    <td>{{ u.first_name }} {{ u.last_name }}</td>
+                    <td>{{ u.email }}</td>
+                    <td>{{ u.department }}</td>
+                    <td>
+                        <form class="inline-form" method="POST" action="/admin/users/{{ u.id }}/update">
+                            <select name="role">
+                                {% for r in roles %}
+                                <option value="{{ r }}" {{ 'selected' if u.role == r }}>{{ r }}</option>
+                                {% endfor %}
+                            </select>
+                            <select name="is_active">
+                                <option value="true" {{ 'selected' if u.is_active }}>Aktif</option>
+                                <option value="false" {{ 'selected' if not u.is_active }}>Pasif</option>
+                            </select>
+                            <button type="submit" class="btn-sm btn-save">Kaydet</button>
+                        </form>
+                    </td>
+                    <td>
+                        {% if u.id != current_user.id %}
+                        <form method="POST" action="/admin/users/{{ u.id }}/delete" onsubmit="return confirm('Kullanıcı #{{ u.id }} silinsin mi?');">
+                            <button type="submit" class="btn-sm btn-del">Sil</button>
+                        </form>
+                        {% else %}
+                        <span class="pill pill-on">Siz</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="admin-section">
+    <h2>💼 İş İlanları Yönetimi</h2>
+    <div class="table-wrap">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Başlık</th>
+                    <th>Şirket</th>
+                    <th>Durum</th>
+                    <th>İşlemler</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for j in jobs %}
+                <tr>
+                    <td>#{{ j.id }}</td>
+                    <td>{{ j.title }}</td>
+                    <td>{{ j.company }}</td>
+                    <td>
+                        <span class="pill {{ 'pill-on' if j.is_active else 'pill-off' }}">
+                            {{ 'Aktif' if j.is_active else 'Pasif' }}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="inline-form">
+                            <form method="POST" action="/admin/jobs/{{ j.id }}/toggle">
+                                <button type="submit" class="btn-sm btn-toggle">{{ 'Pasife Al' if j.is_active else 'Aktifleştir' }}</button>
+                            </form>
+                            <form method="POST" action="/admin/jobs/{{ j.id }}/delete" onsubmit="return confirm('İlan #{{ j.id }} silinsin mi?');">
+                                <button type="submit" class="btn-sm btn-del">Sil</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="admin-section">
+    <h2>📢 Duyuru Yönetimi</h2>
+    <div class="table-wrap">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Başlık</th>
+                    <th>Yazar</th>
+                    <th>Sil</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for a in announcements %}
+                <tr>
+                    <td>#{{ a.id }}</td>
+                    <td>{{ a.title }}</td>
+                    <td>{{ a.author }}</td>
+                    <td>
+                        <form method="POST" action="/admin/announcements/{{ a.id }}/delete" onsubmit="return confirm('Duyuru #{{ a.id }} silinsin mi?');">
+                            <button type="submit" class="btn-sm btn-del">Sil</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="admin-section">
+    <h2>📄 Başvuru Yönetimi</h2>
+    <div class="table-wrap">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>İlan ID</th>
+                    <th>Kullanıcı ID</th>
+                    <th>Durum Güncelle</th>
+                    <th>Sil</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ap in applications %}
+                <tr>
+                    <td>#{{ ap.id }}</td>
+                    <td>#{{ ap.job_posting_id }}</td>
+                    <td>#{{ ap.user_id }}</td>
+                    <td>
+                        <form class="inline-form" method="POST" action="/admin/applications/{{ ap.id }}/status">
+                            <select name="status">
+                                {% for st in app_statuses %}
+                                <option value="{{ st }}" {{ 'selected' if ap.status == st }}>{{ st }}</option>
+                                {% endfor %}
+                            </select>
+                            <button type="submit" class="btn-sm btn-save">Güncelle</button>
+                        </form>
+                    </td>
+                    <td>
+                        <form method="POST" action="/admin/applications/{{ ap.id }}/delete" onsubmit="return confirm('Başvuru #{{ ap.id }} silinsin mi?');">
+                            <button type="submit" class="btn-sm btn-del">Sil</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

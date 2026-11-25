@@ -1,0 +1,47 @@
+{% extends "announcement_base.html" %}
+{% block title %}Başvurularım — İÜ YBS Alumni{% endblock %}
+{% block full_width_top %}
+<section class="page-hero">
+    <div class="page-hero-inner">
+        <div>
+            <div class="page-hero-chip">1453 • Kişisel Başvuru Takibi • {{ current_user.role|upper }}</div>
+            <h1>📄 Başvurularım</h1>
+            <p>Yalnızca kendi yaptığınız iş başvurularını ve güncel değerlendirme durumlarını buradan takip edebilirsiniz.</p>
+        </div>
+        <div class="page-hero-badge">
+            Toplam Başvurum: <span>{{ applications|length }}</span>
+        </div>
+    </div>
+</section>
+{% endblock %}
+{% block content %}
+{% if message %}
+<div class="alert-success"><span>✅</span><span>{{ message }}</span></div>
+{% endif %}
+
+{% if applications and applications|length > 0 %}
+<div class="items-grid">
+    {% for ap in applications %}
+    <div class="item-card">
+        <div class="item-header">
+            <span class="item-title">{{ ap.job.title if ap.job else 'İlan #' ~ ap.job_posting_id }}</span>
+            <span class="id-badge">#{{ ap.id }}</span>
+        </div>
+        <div class="item-badge">Durum: {{ ap.status|upper }}</div>
+        <div class="item-info"><strong>Şirket:</strong> {{ ap.job.company if ap.job else '-' }}</div>
+        <div class="item-info"><strong>Ön Yazı:</strong> {{ ap.cover_letter or 'Belirtilmedi' }}</div>
+        <div class="item-actions" style="margin-top: 0.75rem;">
+            <a href="/jobs/{{ ap.job_posting_id }}" class="btn-action btn-edit" style="text-decoration:none;">İlana Git</a>
+            <form method="POST" action="/my-applications/{{ ap.id }}/delete" style="display:inline;" onsubmit="return confirm('Başvurunuzu geri çekmek istiyor musunuz?');">
+                <button type="submit" class="btn-action btn-delete">Geri Çek</button>
+            </form>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    Henüz bir iş ilanına başvurmadınız. <a href="/jobs" style="color:#006847;font-weight:700;">İş İlanlarını İncele →</a>
+</div>
+{% endif %}
+{% endblock %}

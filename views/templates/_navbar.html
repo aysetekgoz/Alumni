@@ -90,18 +90,41 @@
     }
 </style>
 {% set path = request.url.path if request else '' %}
+{% set current_user = request.state.current_user if request and request.state and request.state.current_user else None %}
+{% set user_role = current_user.role if current_user else '' %}
+{% set nav_items = [
+    ('/home', 'Ana Sayfa', ('admin', 'staff', 'academic', 'alumni', 'student'), path == '/home'),
+    ('/users', 'Mezunlar', ('admin',), path.startswith('/users')),
+    ('/announcements', 'Duyurular', ('admin', 'staff', 'academic', 'alumni', 'student'), path.startswith('/announcements')),
+    ('/jobs', 'İş İlanları', ('admin', 'staff', 'academic', 'alumni', 'student'), path.startswith('/jobs')),
+    ('/my-jobs', 'İlanlarım', ('admin', 'staff', 'academic', 'alumni'), path.startswith('/my-jobs')),
+    ('/applications', 'Başvurular', ('admin', 'staff', 'academic', 'alumni', 'student'), path.startswith('/applications')),
+    ('/my-applications', 'Başvurularım', ('admin', 'alumni', 'student'), path.startswith('/my-applications')),
+    ('/profile', 'Profilim', ('admin', 'staff', 'academic', 'alumni', 'student'), path.startswith('/profile')),
+    ('/about', 'Hakkında', ('admin', 'staff', 'academic', 'alumni', 'student'), path.startswith('/about')),
+] %}
 <header class="sn-header">
-    <a href="/" class="sn-logo">
+    <a href="/home" class="sn-logo">
         <span class="sn-logo-badge">İÜ</span>
         <span>İÜ YBS Alumni</span>
     </a>
     <nav class="sn-links" aria-label="Ana Navigasyon">
-        <a href="/" class="{{ 'active' if path == '/' }}">Ana Sayfa</a>
-        <a href="/users" class="{{ 'active' if path.startswith('/users') }}">Mezunlar</a>
-        <a href="/announcements" class="{{ 'active' if path.startswith('/announcements') }}">Duyurular</a>
-        <a href="/jobs" class="{{ 'active' if path.startswith('/jobs') }}">İş İlanları</a>
-        <a href="/applications" class="{{ 'active' if path.startswith('/applications') }}">Başvurular</a>
-        <a href="/about" class="{{ 'active' if path.startswith('/about') }}">Hakkında</a>
+        {% for href, label, allowed_roles, is_active in nav_items %}
+            {% if not user_role or user_role in allowed_roles %}
+            <a href="{{ href }}" class="{{ 'active' if is_active }}">{{ label }}</a>
+            {% endif %}
+        {% endfor %}
+        {% if user_role == 'admin' %}
+        <a href="/admin" class="{{ 'active' if path.startswith('/admin') }}" style="border: 1px solid #ffc72c; color: #004d34; font-weight: 700;">🛡️ Admin Panel</a>
+        {% endif %}
+        {% if user_role in ('admin', 'staff') %}
         <a href="/api/swagger" target="_blank" class="sn-docs">Swagger UI ↗</a>
+        {% endif %}
+        {% if current_user %}
+        <span style="padding: 0.38rem 0.8rem; border-radius: 999px; background: #e6f4ef; color: #004d34; font-size: 12.5px; font-weight: 600;">
+            {{ current_user.first_name }} · {{ user_role }}
+        </span>
+        {% endif %}
+        <a href="/logout" style="color: #991b1b; font-weight: 600;">Çıkış Yap</a>
     </nav>
 </header>

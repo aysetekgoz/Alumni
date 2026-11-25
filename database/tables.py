@@ -28,7 +28,10 @@ class UserTable(Base):
     first_name = Column(String(100), nullable=False)
     last_name = Column(String(100), nullable=False)
     email = Column(String(255), nullable=False)
-    graduation_year = Column(Integer, nullable=False)
+    password_hash = Column(String(255), nullable=True)
+    role = Column(String(20), nullable=False, server_default="alumni")
+    is_active = Column(Boolean, nullable=False, server_default=true())
+    graduation_year = Column(Integer, nullable=True)
     department = Column(String(150), nullable=False)
 
     job_postings = relationship("JobPostingTable", back_populates="poster")
@@ -41,10 +44,16 @@ class UserTable(Base):
 
     __table_args__ = (
         CheckConstraint(
-            "graduation_year BETWEEN 1900 AND 2100", name="ck_users_graduation_year"
+            "graduation_year IS NULL OR (graduation_year BETWEEN 1900 AND 2100)",
+            name="ck_users_graduation_year",
+        ),
+        CheckConstraint(
+            "role IN ('admin','staff','academic','student','alumni')",
+            name="ck_users_role",
         ),
         CheckConstraint("email = lower(email)", name="ck_users_email_lowercase"),
         Index("uq_users_email", "email", unique=True),
+        Index("ix_users_role", "role"),
         Index("ix_users_department", "department"),
         Index("ix_users_graduation_year", "graduation_year"),
     )

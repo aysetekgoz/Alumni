@@ -1,0 +1,146 @@
+{% extends "announcement_base.html" %}
+{% block title %}İlanlarım — İÜ YBS Alumni{% endblock %}
+{% block full_width_top %}
+<section class="page-hero">
+    <div class="page-hero-inner">
+        <div>
+            <div class="page-hero-chip">1453 • İlan &amp; Aday Yönetimi • {{ current_user.role|upper }}</div>
+            <h1>💼 İlanlarım</h1>
+            <p>Kendi açtığınız iş/staj ilanlarını yönetin ve ilanlarınıza gelen başvuruları değerlendirin.</p>
+        </div>
+        <div class="page-hero-badge">
+            Toplam İlanım: <span>{{ jobs|length }}</span>
+        </div>
+    </div>
+</section>
+{% endblock %}
+{% block content %}
+<style>
+    .alert-error {
+        display: flex; align-items: center; gap: 0.75rem;
+        padding: 1rem 1.25rem; border-radius: 12px;
+        background: #fef2f2; border: 1px solid #fecaca;
+        color: #991b1b; font-weight: 500; margin-bottom: 1.25rem;
+    }
+    .apps-box {
+        margin-top: 1rem;
+        padding-top: 0.85rem;
+        border-top: 1px solid #dce6e1;
+    }
+    .app-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        padding: 0.55rem 0;
+        border-bottom: 1px dashed #e6efea;
+        font-size: 0.86rem;
+    }
+    .app-row select {
+        padding: 0.3rem 0.5rem;
+        border-radius: 8px;
+        border: 1px solid #bfd2c9;
+    }
+</style>
+
+{% if message %}
+<div class="alert-success"><span>✅</span><span>{{ message }}</span></div>
+{% endif %}
+{% if error %}
+<div class="alert-error"><span>⚠️</span><span>{{ error }}</span></div>
+{% endif %}
+
+<div class="crud-grid">
+    <div class="form-card">
+        <h2>➕ Yeni İlan Yayınla</h2>
+        <form method="POST" action="/my-jobs/create">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="title">İlan Başlığı (Maks. 120 kr.)</label>
+                    <input type="text" id="title" name="title" maxlength="120" required placeholder="Örn: Junior Backend Developer">
+                </div>
+                <div class="form-group">
+                    <label for="company">Şirket / Kurum</label>
+                    <input type="text" id="company" name="company" required placeholder="Örn: İÜ Teknokent">
+                </div>
+                <div class="form-group">
+                    <label for="city">Şehir / Konum (Opsiyonel)</label>
+                    <input type="text" id="city" name="city" placeholder="Örn: İstanbul / Remote">
+                </div>
+                <div class="form-group">
+                    <label for="employment_type">Çalışma Türü</label>
+                    <select id="employment_type" name="employment_type">
+                        <option value="full_time">Tam Zamanlı (full_time)</option>
+                        <option value="part_time">Yarı Zamanlı (part_time)</option>
+                        <option value="internship">Staj (internship)</option>
+                        <option value="contract">Sözleşmeli (contract)</option>
+                    </select>
+                </div>
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label for="application_url">Harici Başvuru Linki (Opsiyonel)</label>
+                    <input type="url" id="application_url" name="application_url" placeholder="https://...">
+                </div>
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label for="description">Açıklama (Opsiyonel)</label>
+                    <textarea id="description" name="description" rows="3" placeholder="Pozisyon detayları..."></textarea>
+                </div>
+            </div>
+            <button type="submit" class="btn-submit">İlanı Yayınla</button>
+        </form>
+    </div>
+
+    <div>
+        {% if jobs and jobs|length > 0 %}
+        <div class="items-grid">
+            {% for j in jobs %}
+            <div class="item-card">
+                <div class="item-header">
+                    <span class="item-title">{{ j.title }}</span>
+                    <span class="id-badge">#{{ j.id }}</span>
+                </div>
+                <div class="item-badge">{{ 'Aktif' if j.is_active else 'Pasif' }} · {{ j.employment_type }}</div>
+                <div class="item-info"><strong>Şirket:</strong> {{ j.company }}</div>
+                <div class="item-info"><strong>Konum:</strong> {{ j.city or 'Belirtilmedi' }}</div>
+
+                <div class="item-actions" style="margin-top: 0.75rem;">
+                    <form method="POST" action="/my-jobs/{{ j.id }}/toggle" style="display:inline;">
+                        <button type="submit" class="btn-action btn-edit">{{ 'Pasife Al' if j.is_active else 'Aktifleştir' }}</button>
+                    </form>
+                    <form method="POST" action="/my-jobs/{{ j.id }}/delete" style="display:inline;" onsubmit="return confirm('İlan silinsin mi?');">
+                        <button type="submit" class="btn-action btn-delete">Sil</button>
+                    </form>
+                </div>
+
+                <div class="apps-box">
+                    <strong style="font-size: 0.85rem; color: #004d34;">Gelen Başvurular ({{ j.applications|length }})</strong>
+                    {% if j.applications %}
+                        {% for ap in j.applications %}
+                        <div class="app-row">
+                            <span>
+                                <strong>{{ ap.applicant.first_name }} {{ ap.applicant.last_name }}</strong>
+                                ({{ ap.applicant.email }})
+                            </span>
+                            <form method="POST" action="/my-jobs/applications/{{ ap.id }}/status" style="display:inline-flex; gap:0.35rem; align-items:center;">
+                                <select name="status">
+                                    {% for st in app_statuses %}
+                                    <option value="{{ st }}" {{ 'selected' if ap.status == st }}>{{ st }}</option>
+                                    {% endfor %}
+                                </select>
+                                <button type="submit" class="btn-action btn-edit" style="padding:0.28rem 0.6rem;">Güncelle</button>
+                            </form>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p style="font-size:0.82rem; color:#64748b; margin-top:0.35rem;">Henüz başvuru yok.</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">Henüz oluşturduğunuz bir iş ilanı bulunmuyor.</div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
